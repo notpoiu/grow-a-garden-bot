@@ -3,6 +3,13 @@ import Ratelimits from "../ratelimits.js";
 import Logger from "../logger.js";
 import { REST, Routes } from 'discord.js';
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const MessageWorker = new ConcurrencyPool(Ratelimits.RequestsPerSecond, 1000);
 const DiscordREST = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
@@ -55,14 +62,57 @@ export const UploadEmoji = async (emoji_name, emoji_image) => {
     return response.json();
 }
 
+/**
+ * GetSlashCommands is a function that retrieves all slash commands from the commands directory.
+ * It scans the directory structure and imports each command file.
+ */
+export const GetSlashCommands = async () => {
+    const FoldersPath = path.join(__dirname, '..', 'commands');
+    const CommandFolders = fs.readdirSync(FoldersPath);
+    const commands = [];
+    
+    for (const folder of CommandFolders) {
+        const commandsPath = path.join(FoldersPath, folder);
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        for (const file of commandFiles) {
+            const filePath = path.join(commandsPath, file);
+            try {
+                const output = await import(filePath);
+                const command = output.default || output;
+
+                if ('data' in command && 'execute' in command) {
+                    commands.push(command.data);
+                } else {
+                    Logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+                }
+            } catch (error) {
+                Logger.error(`Failed to import command from ${filePath}: ${error.message}`);
+            }
+        }
+    }
+
+    return commands;
+}
+
+/**
+ * * SynchronizeSlashCommands is a function that synchronizes the slash commands with Discord.
+ * * It retrieves the commands using GetSlashCommands and updates them via Discord's REST API.
+ * * It runs immediately to ensure the commands are up-to-date.
+ */
 export const SynchronizeSlashCommands = async () => {
-    try {
+    setImmediate(async () => {
         Logger.info('Synchronizing slash commands (/) with Discord...');
 
-        await DiscordREST.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
+        try {
+            const commands = await GetSlashCommands();
+            await DiscordREST.put(
+                Routes.applicationCommands(process.env.CLIENT_ID, 1307383623145623552),
+                { body: commands.map(command => command.toJSON())}
+            );
 
-        Logger.success('Successfully reloaded application (/) commands.');
-    } catch (error) {
-        Logger.error(error);
-    }
+            Logger.success(`Successfully synchronized ${commands.length} slash command(s).`);
+        } catch (error) {
+            Logger.error(`Failed to synchronize slash commands: ${error.message}`);
+        }
+    });
 }
