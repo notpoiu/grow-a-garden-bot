@@ -40,62 +40,70 @@ local UpdateServiceSrc = require(UpdateServiceModule)
 
 --// Initialization
 do
+    --// Helper Functions
+    local function GetDataFromModule(module, callback)
+        local IconData = {}
+        for Name, Data in module do
+            local Key = callback(Data)
+            if not Key then
+                continue
+            end
+            
+            IconData[Name] = Data[Key]
+        end
+
+        local VisibleData = {}
+        for Name, Data in module do
+            if (
+                not Data.DisplayInShop or
+                (UpdateServiceSrc:IsHiddenFromUpdate(Name) or UpdateServiceSrc:IsHiddenAfterUpdate(Name))
+            ) then
+                continue
+            end
+
+            VisibleData[Name] = Data.LayoutOrder
+        end
+
+        --// Sort Visible Data by Layout Order
+        table.sort(VisibleData, function(a, b)
+            return VisibleData[a] < VisibleData[b]
+        end)
+
+        --// Update Visible Data to be an array
+        local SortedVisibleData = {}
+        for Name, _ in VisibleData do
+            table.insert(SortedVisibleData, Name)
+        end
+
+        return IconData, SortedVisibleData
+    end
+
     --// Seed Data Handler
-    local SeedData = {}
-    for Name, FruitData in SeedDataSrc do
-        if not FruitData["FruitIcon"] then
-            continue
-        end
-        
-        SeedData[Name] = FruitData.FruitIcon
-    end
-
-    local VisibleSeeds = {}
-    for Name, Data in SeedDataSrc do
-        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.SeedName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.SeedName)) then
-            continue
+    local SeedData, VisibleSeeds = GetDataFromModule(SeedDataSrc, function(Data)
+        if not Data["FruitIcon"] then
+            return nil
         end
 
-        table.insert(VisibleSeeds, Name)
-    end
+        return "FruitIcon"
+    end)
 
     --// Gear Data Handler
-    local GearData = {}
-    for Name, ToolData in GearDataSrc do
-        if not ToolData["Asset"] then
-            continue
+    local GearData, VisibleGear = GetDataFromModule(GearDataSrc, function(Data)
+        if not Data["Asset"] then
+            return nil
         end
 
-        GearData[Name] = ToolData.Asset
-    end
-
-    local VisibleGear = {}
-    for Name, Data in GearDataSrc do
-        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.GearName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.GearName)) then
-            continue
-        end
-
-        table.insert(VisibleGear, Name)
-    end
+        return "Asset"
+    end)
 
     --// Pet Data Handler
-    local PetData = {}
-    for Name, Data in PetEggsSrc do
-        if not Data["HatchTime"] or not Data["Icon"] then
-            continue
+    local PetData, VisibleEgg = GetDataFromModule(PetEggsSrc, function(Data)
+        if not Data["Icon"] or not Data["HatchTime"] then
+            return nil
         end
 
-        PetData[Name] = Data.Icon
-    end
-
-    local VisibleEgg = {}
-    for Name, Data in PetEggsSrc do
-        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.EggName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.EggName)) then
-            continue
-        end
-
-        table.insert(VisibleEgg, Name)
-    end
+        return "Icon"
+    end)
 
     --// Weather Data Handler
     local WeatherData = workspace:GetAttribute("AllWeather")
