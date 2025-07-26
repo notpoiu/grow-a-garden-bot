@@ -29,7 +29,7 @@ export default {
     async execute(interaction) {
         const stock = interaction.options.getString("stock");
         const channel = interaction.options.getChannel("channel") || interaction.channel;
-        
+
         // Check for permissions to send messages in the channel
         if (!channel.permissionsFor(interaction.guild.members.me).has('SendMessages')) {
             return await interaction.reply({

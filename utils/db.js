@@ -14,12 +14,12 @@ const db = new DatabaseSync(join(__dirname, "../data/database.db"));
 const InternalEnsureTables = () => {
     db.exec(`
         CREATE TABLE IF NOT EXISTS subscribed_channels (
-            channel_id TEXT PRIMARY KEY,
+            channel_id TEXT NOT NULL,
             type TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS roles (
-            channel_id TEXT PRIMARY KEY,
+            channel_id TEXT NOT NULL,
             role_id TEXT NOT NULL,
             name TEXT NOT NULL,
             stock_type TEXT NOT NULL,
