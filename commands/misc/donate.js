@@ -13,7 +13,7 @@ export default {
             components: [
                 CreateEmbed({
                     title: "Support the Bot",
-                    description: "If you'd like to support the development and uptime of the bot, we take donations.\n- Litecoin: `Lhj9faMDTYXfTHgUSG7gaWn4WyoCWvfLzx`\n- Etherium: `0xEe8D68497286a5dD81854662697711200abCC5BB`\n- Bitcoin: `bc1q64aesx8crarvzy8und7ez7uf9j6qfzrjf4dmwg`",
+                    description: "If you'd like to support the development and uptime of the bot, we take donations.\n- <:ltc:1398767322457706546> **Litecoin**: ||`Lhj9faMDTYXfTHgUSG7gaWn4WyoCWvfLzx`||\n- <:etherium:1398767309878984815> **Etherium**: ||`0xEe8D68497286a5dD81854662697711200abCC5BB`||\n- <:bitcoin:1398767298604564641> **Bitcoin**: ||`bc1q64aesx8crarvzy8und7ez7uf9j6qfzrjf4dmwg`||",
                     footer: "This bot is being maintained with pocket money so any support is appreciated!",
                 })
             ],
