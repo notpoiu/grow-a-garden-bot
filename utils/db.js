@@ -15,7 +15,8 @@ const InternalEnsureTables = () => {
     db.exec(`
         CREATE TABLE IF NOT EXISTS subscribed_channels (
             channel_id TEXT NOT NULL,
-            type TEXT NOT NULL
+            type TEXT NOT NULL,
+            PRIMARY KEY (channel_id, type)
         );
 
         CREATE TABLE IF NOT EXISTS roles (
@@ -24,7 +25,7 @@ const InternalEnsureTables = () => {
             name TEXT NOT NULL,
             stock_type TEXT NOT NULL,
 
-            FOREIGN KEY (channel_id) REFERENCES subscribed_channels(channel_id) ON DELETE CASCADE
+            FOREIGN KEY (channel_id, stock_type) REFERENCES subscribed_channels(channel_id, type) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS stock_data (
@@ -155,11 +156,11 @@ export const AddSubscribedChannel = (channel_id, type) => {
     stmt.run(channel_id, type);
 }
 
-export const RemoveSubscribedChannel = (channel_id) => {
+export const RemoveSubscribedChannel = (channel_id, type) => {
     InternalEnsureTables();
 
-    const stmt = db.prepare("DELETE FROM subscribed_channels WHERE channel_id = ?");
-    stmt.run(channel_id);
+    const stmt = db.prepare("DELETE FROM subscribed_channels WHERE channel_id = ? AND type = ?");
+    stmt.run(channel_id, type);
 }
 
 export const AddPingRole = (channel_id, role_id, name, stock_type) => {

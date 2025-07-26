@@ -54,6 +54,7 @@ export default {
                     footer: "You can start tracking this stock again using the /track command.",
                 })
             ],
+            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
         });
     }
 }
