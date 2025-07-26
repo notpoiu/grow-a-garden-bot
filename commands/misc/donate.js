@@ -1,10 +1,12 @@
-import { SlashCommandBuilder, MessageFlags } from "discord.js";
+import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CreateEmbed } from "../../utils/message.js";
 
 export default {
     data: new SlashCommandBuilder()
         .setName("donate")
-        .setDescription("Provides information on how to support the bot."),
+        .setDescription("Provides information on how to support the bot.")
+        .setIntegrationTypes(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)
+        .setContexts(InteractionContextType.BotDM, InteractionContextType.PrivateChannel, InteractionContextType.Guild),
     
     async execute(interaction) {
         await interaction.reply({

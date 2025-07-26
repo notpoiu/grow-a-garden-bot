@@ -1,6 +1,7 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
+import { GetAssetIdBinary } from '../../../utils/roblox.js';
 import { UploadEmoji } from '../../../utils/rest.js';
 import Logger from '../../../logger.js';
 
@@ -29,30 +30,7 @@ const ai = new GoogleGenAI({
 app.use(json, auth);
 
 // Routes
-app.post('/weather_update', async (req, res) => {
-    const { type, data } = req.body;
-
-    if (!type || !data) {
-        return res.status(400).send({ error: 'Missing type or data' });
-    }
-
-    //await MassSendStockMessage('weather', type, data);
-
-    res.status(200).send({ message: 'Weather update sent successfully' });
-});
-
-app.post('/stock_update', async (req, res) => {
-    const { type, category, data } = req.body;
-
-    if (!type || !category || !data) {
-        return res.status(400).send({ error: 'Missing type, category or data' });
-    }
-
-    await MassSendStockMessage(category, type, data);
-
-    res.status(200).send({ message: 'Stock update sent successfully' });
-})
-
+// Update Stock Endpoint
 app.post("/stock/update/:type", async (req, res) => {
     const { type } = req.params;
 
@@ -62,7 +40,8 @@ app.post("/stock/update/:type", async (req, res) => {
 
     const data = req.body;
 
-    Logger.log(`[Stock] Received update for type: ${type}`, data);
+    Logger.info(`[Stock] Received update for type: ${type}`);
+    SetCurrentStockData(type, data);
 })
 
 // Update Data Endpoint
@@ -161,8 +140,8 @@ app.post('/data/update/:type', async (req, res) => {
         await setTimeout(() => {}, 250);
     }
 
-    res.status(200).send({ message: 'Stock data updated successfully' });
-    Logger.success(`Stock data for ${type} updated successfully!`);
+    res.status(200).send({ message: 'Static Data updated successfully' });
+    Logger.success(`Static Data for ${type} updated successfully!`);
 });
 
 // Utility Functions

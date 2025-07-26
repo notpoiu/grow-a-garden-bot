@@ -13,3 +13,7 @@ export const GetAllTrackers = () => {
 
     return StockChoices;
 }
+
+export const GetAllTimerTrackers = () => {
+    return GetAllTrackers().filter(stock => stock !== "Admin Restock");
+}

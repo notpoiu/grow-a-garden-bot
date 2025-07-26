@@ -10,12 +10,13 @@ import {
 export const EmojiMappings = {
     "Seed": "🌱",
     "Weather": "☀️",
+    "Egg": "🥚",
     "Gear": "🔨",
 }
 
 export const ConnectorEmojis = {
-    "End": "<end:1398493116272742420>",
-    "Connect": "<connect:1398493096748253195>",
+    "End": "<:end:1398493116272742420>",
+    "Connect": "<:connect:1398493096748253195>",
 }
 
 export const CreateText = (content) => {
@@ -33,7 +34,14 @@ export const CreateEmbed = (data) => {
         .addTextDisplayComponents(
             CreateText(description)
         )
-        .addSeparatorComponents(new SeparatorBuilder())
+
+    if (footer) {
+        ContainerComponent.addTextDisplayComponents(
+            CreateText(`-# ${footer}`)
+        )
+    }
+
+    ContainerComponent.addSeparatorComponents(new SeparatorBuilder());
 
     if (ActionRow) {
         const ButtonComponents = ActionRow.map(button => {
@@ -42,21 +50,11 @@ export const CreateEmbed = (data) => {
                 .setStyle(ButtonStyle.Link)
                 .setURL(button.link);
         });
-        /*const QuickJoinButton = new ButtonBuilder()
-            .setLabel("Quick Join")
-            .setStyle(ButtonStyle.Link)
-            .setURL("https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066")*/
 
         const RestockActionRow = new ActionRowBuilder()
             .addComponents(...ButtonComponents);
 
         ContainerComponent.addActionRowComponents(RestockActionRow);
-    }
-
-    if (footer) {
-        ContainerComponent.addTextDisplayComponents(
-            CreateText(`-# ${footer}`)
-        )
     }
     
     return ContainerComponent

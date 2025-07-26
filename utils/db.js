@@ -38,7 +38,29 @@ const InternalEnsureTables = () => {
             original_name TEXT NOT NULL,
             emoji TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS current_stock_data (
+            type TEXT PRIMARY KEY NOT NULL,
+            data TEXT NOT NULL,
+            timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        )
     `);
+}
+
+export const GetCurrentStockData = (type) => {
+    InternalEnsureTables();
+
+    const data = db.prepare("SELECT data FROM current_stock_data WHERE type = ?").get(type);
+    if (!data) return null;
+
+    return JSON.parse(data.data);
+}
+
+export const SetCurrentStockData = (type, data) => {
+    InternalEnsureTables();
+
+    const stmt = db.prepare("INSERT OR REPLACE INTO current_stock_data (type, data) VALUES (?, ?)");
+    stmt.run(type, JSON.stringify(data));
 }
 
 export const GetStockTypes = () => {
@@ -46,6 +68,13 @@ export const GetStockTypes = () => {
 
     const stockTypes = db.prepare("SELECT DISTINCT type FROM stock_data").all();
     return stockTypes.map(type => type.type);
+}
+
+export const GetEmojiForStock = (stock) => {
+    InternalEnsureTables();
+    
+    const emojiData = db.prepare("SELECT emoji FROM stock_data WHERE name = ?").get(stock);
+    return emojiData ? emojiData.emoji : null;
 }
 
 export const GetAllStockOfType = (type) => {

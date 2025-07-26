@@ -1,3 +1,5 @@
+import Logger from "../logger.js";
+
 export const GetAssetIdBinary = async (asset_id, encoding) => {
     const response = await fetch(`https://thumbnails.roblox.com/v1/assets?assetIds=${asset_id}&size=150x150&format=Png&isCircular=false`);
     if (!response.ok) {

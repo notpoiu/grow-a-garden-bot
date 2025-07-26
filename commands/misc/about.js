@@ -1,10 +1,12 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { ApplicationIntegrationType, InteractionContextType, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { CreateEmbed } from "../../utils/message.js";
 
 export default {
     data: new SlashCommandBuilder()
         .setName("about")
-        .setDescription("Provides information about the bot."),
+        .setDescription("Provides information about the bot.")
+        .setIntegrationTypes(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)
+        .setContexts(InteractionContextType.BotDM, InteractionContextType.PrivateChannel, InteractionContextType.Guild),
 
     async execute(interaction) {
         
@@ -12,12 +14,16 @@ export default {
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: "A Discord bot that sends push notifications for grow a garden restocks.\nBot created and maintained by [upio](https://www.upio.dev/).",
+                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size} servers** and **${interaction.client.users.cache.size} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
                     ActionRow: [
                         {
                             label: "Support Server",
                             link: "https://discord.gg/mspaint"
                         },
+                        {
+                            label: "Authorize Bot",
+                            link: "https://discord.com/oauth2/authorize?client_id=1398481293016174682"
+                        }
                     ]
                 })
             ],
