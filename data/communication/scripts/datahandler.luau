@@ -27,13 +27,18 @@ local UpdateServiceModule = ModulesFolder:WaitForChild("UpdateService")
 local DataFolder = ReplicatedStorage:WaitForChild("Data")
 local SeedDataModule = DataFolder.SeedData
 local GearDataModule = DataFolder.GearData
+local PetEggsDataModule = DataFolder.PetEggData
 local PetEggsModule = DataFolder.PetRegistry.PetEggs
+
 local EventShopDataModule = DataFolder.EventShopData
 
 --// Modules
 local SeedDataSrc = require(SeedDataModule)
 local GearDataSrc = require(GearDataModule)
-local PetEggsSrc = require(PetEggsModule)
+
+local PetEggsDataSrc = require(PetEggsDataModule) --// For Data
+local PetEggsSrc = require(PetEggsModule) ---// For Images
+
 local EventShopDataSrc = require(EventShopDataModule)
 
 local UpdateServiceSrc = require(UpdateServiceModule)
@@ -44,35 +49,48 @@ do
     local function GetDataFromModule(module, callback)
         local IconData = {}
         for Name, Data in module do
-            local Key = callback(Data)
-            if not Key then
+            local Yep = callback(Data, Name)
+            if typeof(Yep) == nil then
                 continue
             end
+
+            if typeof(Yep) == "string" then
+                Yep = module[Yep]
+            end
             
-            IconData[Name] = Data[Key]
+            IconData[Name] = Yep
         end
 
         local VisibleData = {}
         for Name, Data in module do
             if (
-                not Data.DisplayInShop or
+                (typeof(Data.DisplayInShop) == "boolean" and Data.DisplayInShop == false) or
                 (UpdateServiceSrc:IsHiddenFromUpdate(Name) or UpdateServiceSrc:IsHiddenAfterUpdate(Name))
             ) then
                 continue
             end
 
-            VisibleData[Name] = Data.LayoutOrder
+            local Order = if Data["LayoutOrder"] then Data.LayoutOrder else 0
+
+            VisibleData[Name] = Order
         end
 
         --// Sort Visible Data by Layout Order
-        table.sort(VisibleData, function(a, b)
-            return VisibleData[a] < VisibleData[b]
+        local StagedSortedData = {}
+        for Name, LayoutOrder in VisibleData do
+            table.insert(StagedSortedData, {Name, LayoutOrder})
+        end
+
+        table.sort(StagedSortedData, function(a, b)
+            return a[2] < b[2]
         end)
+
+        VisibleData = StagedSortedData
 
         --// Update Visible Data to be an array
         local SortedVisibleData = {}
-        for Name, _ in VisibleData do
-            table.insert(SortedVisibleData, Name)
+        for _, Data in VisibleData do
+            table.insert(SortedVisibleData, Data[1])
         end
 
         return IconData, SortedVisibleData
@@ -97,12 +115,17 @@ do
     end)
 
     --// Pet Data Handler
-    local PetData, VisibleEgg = GetDataFromModule(PetEggsSrc, function(Data)
+    local PetData, VisibleEgg = GetDataFromModule(PetEggsDataSrc, function(_, Name)
+        if not PetEggsSrc[Name] then
+            return nil
+        end
+        
+        local Data = PetEggsSrc[Name]
         if not Data["Icon"] or not Data["HatchTime"] then
             return nil
         end
 
-        return "Icon"
+        return Data["Icon"]
     end)
 
     --// Weather Data Handler

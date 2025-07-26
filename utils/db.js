@@ -36,7 +36,7 @@ const InternalEnsureTables = () => {
         );
 
         CREATE TABLE IF NOT EXISTS shop_data (
-            type TEXT NOT NULL,
+            type TEXT PRIMARY KEY NOT NULL,
             visible_items TEXT NOT NULL
         );
 

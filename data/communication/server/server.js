@@ -125,9 +125,9 @@ app.post('/data/update/:type', async (req, res) => {
         // Visibility Update
         type = type.replace("VisibilityShop", "").trim();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (data === null) {
             Logger.error('Invalid data format for visibility update');
-            return res.status(400).send({ error: 'Invalid data format' });
+            return res.status(400).send({ error: 'Invalid data format for visibility update' });
         }
 
         // Update visibility data
