@@ -40,7 +40,7 @@ app.post("/stock/update/:type", async (req, res) => {
 
     const data = req.body;
 
-    Logger.info(`[Stock] Received update for type: ${type}`);
+    Logger.info(`Received stock update for type: ${type}`);
     SetCurrentStockData(type, data);
 })
 
