@@ -49,16 +49,16 @@ do
     local function GetDataFromModule(module, callback)
         local IconData = {}
         for Name, Data in module do
-            local Yep = callback(Data, Name)
-            if typeof(Yep) == nil then
+            local Result, CustomResponse = callback(Data, Name)
+            if typeof(Result) == nil then
                 continue
             end
 
-            if typeof(Yep) == "string" then
-                Yep = module[Yep]
+            if not CustomResponse then
+                Result = module[Result]
             end
-            
-            IconData[Name] = Yep
+
+            IconData[Name] = Result
         end
 
         local VisibleData = {}
@@ -125,7 +125,7 @@ do
             return nil
         end
 
-        return Data["Icon"]
+        return Data["Icon"], true
     end)
 
     --// Weather Data Handler
