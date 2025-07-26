@@ -40,6 +40,20 @@ export default {
             });
         }
 
+        // Check if the user has permission to manage roles
+        if (!interaction.member.permissions.has('ManageRoles')) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Reaction Roles Setup",
+                        description: "You do not have permission to manage roles in this server. Please contact an admin to set up reaction roles.",
+                        footer: "You can still set up reaction roles in channels you have permission to manage.",
+                    })
+                ],
+                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
+
         const stock = interaction.options.getString("stock");
         const channel = interaction.options.getChannel("channel") || interaction.channel;
     }

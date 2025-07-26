@@ -44,6 +44,20 @@ export default {
             });
         }
 
+        // Check if the user has permission to manage channels
+        if (!interaction.member.permissions.has('ManageChannels')) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Tracking Setup",
+                        description: "You do not have permission to manage channels in this server. Please contact an admin to set up tracking.",
+                        footer: "You can still track stocks in channels you have permission to manage.",
+                    })
+                ],
+                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
+
         AddSubscribedChannel(channel.id, stock);
 
         return await interaction.reply({
