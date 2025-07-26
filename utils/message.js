@@ -1,12 +1,11 @@
-import { ButtonBuilder, ButtonStyle, ActionRowBuilder, ContainerBuilder } from 'discord.js';
-
-export const QuickJoinButton = new ButtonBuilder()
-    .setLabel("Quick Join")
-    .setStyle(ButtonStyle.Link)
-    .setURL("https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066")
-
-export const RestockActionRow = new ActionRowBuilder()
-    .addComponents(QuickJoinButton)
+import {
+    ButtonBuilder,
+    ButtonStyle,
+    ActionRowBuilder,
+    ContainerBuilder,
+    TextDisplayBuilder,
+    SeparatorBuilder
+} from 'discord.js';
 
 export const EmojiMappings = {
     "Seed": "🌱",
@@ -25,7 +24,7 @@ export const CreateText = (content) => {
 }
 
 export const CreateEmbed = (data) => {
-    const { title, description, footer, actionrow } = data;
+    const { title, description, footer, ActionRow } = data;
     const ContainerComponent = new ContainerBuilder()
         .addTextDisplayComponents(
             CreateText(`## ${title}`)
@@ -35,15 +34,29 @@ export const CreateEmbed = (data) => {
             CreateText(description)
         )
         .addSeparatorComponents(new SeparatorBuilder())
-    
+
+    if (ActionRow) {
+        const ButtonComponents = ActionRow.map(button => {
+            return new ButtonBuilder()
+                .setLabel(button.label)
+                .setStyle(ButtonStyle.Link)
+                .setURL(button.link);
+        });
+        /*const QuickJoinButton = new ButtonBuilder()
+            .setLabel("Quick Join")
+            .setStyle(ButtonStyle.Link)
+            .setURL("https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066")*/
+
+        const RestockActionRow = new ActionRowBuilder()
+            .addComponents(...ButtonComponents);
+
+        ContainerComponent.addActionRowComponents(RestockActionRow);
+    }
+
     if (footer) {
         ContainerComponent.addTextDisplayComponents(
             CreateText(`-# ${footer}`)
         )
-    }
-
-    if (actionrow) {
-        ContainerComponent.addActionRowComponents(RestockActionRow);
     }
     
     return ContainerComponent
