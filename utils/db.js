@@ -1,6 +1,11 @@
 import { DatabaseSync } from "node:sqlite"
+import { join, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
 
-const db = new DatabaseSync("../data/database.db");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const db = new DatabaseSync(join(__dirname, "../data/database.db"));
 
 /*
     subscribed_channels: stores channels that have subscribed to stock updates (type specifies the kind of updates).
