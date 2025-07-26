@@ -162,11 +162,11 @@ export const RemoveSubscribedChannel = (channel_id) => {
     stmt.run(channel_id);
 }
 
-export const AddPingRole = (channel_id, role_id, name) => {
+export const AddPingRole = (channel_id, role_id, name, stock_type) => {
     InternalEnsureTables();
 
-    const stmt = db.prepare("INSERT OR IGNORE INTO roles (channel_id, role_id, name) VALUES (?, ?, ?)");
-    stmt.run(channel_id, role_id, name);
+    const stmt = db.prepare("INSERT OR IGNORE INTO roles (channel_id, role_id, name, stock_type) VALUES (?, ?, ?, ?)");
+    stmt.run(channel_id, role_id, name, stock_type);
 }
 
 export const RemovePingRole = (channel_id, role_id) => {
