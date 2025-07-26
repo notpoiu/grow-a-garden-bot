@@ -10,8 +10,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MessageWorker = new ConcurrencyPool(Ratelimits.RequestsPerSecond, 1000);
 const DiscordREST = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+const MessageWorker = new ConcurrencyPool(Ratelimits.RequestsPerSecond, 1000);
 
 /** 
  *   MassSendMessage is a function that sends messages to multiple Discord channels.
@@ -122,8 +122,8 @@ export const SynchronizeSlashCommands = async () => {
             }
 
             Logger.info("");
-
             Logger.info(`Successfully synchronized ${commands.length} slash command(s).`);
+            console.log();
             
         } catch (error) {
             Logger.error(`Failed to synchronize slash commands: ${error.message}`);

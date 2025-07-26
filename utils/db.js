@@ -22,6 +22,7 @@ const InternalEnsureTables = () => {
             channel_id TEXT PRIMARY KEY,
             role_id TEXT NOT NULL,
             name TEXT NOT NULL,
+            stock_type TEXT NOT NULL,
 
             FOREIGN KEY (channel_id) REFERENCES subscribed_channels(channel_id) ON DELETE CASCADE
         );

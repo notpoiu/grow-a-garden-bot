@@ -1,7 +1,7 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateEmbed, EmojiMappings, ConnectorEmojis } from "../../utils/message.js";
-import { GetCurrentStockData, GetEmojiForStock } from "../../utils/db.js";
+import { CreateStockEmbed } from "../../utils/message.js";
 import { GetAllTimerTrackers } from "../../utils/utils.js";
+import { GetCurrentStockData } from "../../utils/db.js";
 
 const StockChoices = GetAllTimerTrackers()
     .map(stock => ({
@@ -26,36 +26,8 @@ export default {
 
     async execute(interaction) {
         const stock = interaction.options.getString("stock");
-        
-        const Data = GetCurrentStockData(stock)
+        const data = GetCurrentStockData(stock)
 
-        let Description = "";
-        if (!Data || Object.keys(Data).length === 0) {
-            Description = "No stock data available.";
-        } else {
-            Description = Object.entries(Data).map(([item_name, quantity], index) => {
-                const connector = index === Object.keys(Data).length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
-                const emoji = GetEmojiForStock(item_name) || EmojiMappings[item_name] || "";
-    
-                return `${connector}**${emoji} ${item_name}** (x${quantity})`;
-            }).join("\n")
-        }
-
-        return await interaction.reply({
-            components: [
-                CreateEmbed({
-                    title: `${EmojiMappings[stock] == undefined ? "" : EmojiMappings[stock] + " "}${stock} Stock`,
-                    description: Description,
-                    footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
-                    ActionRow: [
-                        {
-                            label: "Quick Join",
-                            link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
-                        }
-                    ]
-                })
-            ],
-            flags: MessageFlags.IsComponentsV2
-        });
+        return await interaction.reply(CreateStockEmbed(stock, data));
     }
 }

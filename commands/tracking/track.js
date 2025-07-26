@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CreateEmbed } from "../../utils/message.js";
 import { GetAllTrackers } from "../../utils/utils.js";
+import { AddSubscribedChannel } from "../../utils/db.js";
 
 const StockChoices = GetAllTrackers()
     .map(stock => ({
@@ -43,6 +44,17 @@ export default {
             });
         }
 
-        
+        AddSubscribedChannel(channel.id, stock);
+
+        return await interaction.reply({
+            components: [
+                CreateEmbed({
+                    title: "Tracking Setup",
+                    description: `Successfully started tracking **${stock}** in ${channel}. You will receive notifications for restocks in this channel.`,
+                    footer: "You can stop tracking this stock using the /untrack command.",
+                })
+            ],
+            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+        });
     }
 }

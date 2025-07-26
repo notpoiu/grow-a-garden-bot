@@ -1,8 +1,9 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels } from '../../../utils/db.js';
+import { CreateStockEmbed } from '../../../utils/message.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
-import { UploadEmoji } from '../../../utils/rest.js';
+import { MassSendMessage, UploadEmoji } from '../../../utils/rest.js';
 import Logger from '../../../logger.js';
 
 import express from 'express';
@@ -40,8 +41,28 @@ app.post("/stock/update/:type", async (req, res) => {
 
     const data = req.body;
 
-    Logger.info(`Received stock update for type: ${type}`);
+    Logger.info(`Received stock update for type ${type} at ${new Date().toISOString()}.`);
+    
+    // Update Stock Data
     SetCurrentStockData(type, data);
+
+    // Send Push Notification
+    const SubscribedChannels = GetSubscribedChannels(type);
+    if (SubscribedChannels.length === 0) {
+        Logger.info(`No channels subscribed to ${type} stock updates.`);
+        return res.status(200).send({ message: 'No channels subscribed to this stock type.' });
+    }
+
+    // Create Stock Embed for each subscribed channel with pings
+    // Prefix the stock name with "Latest " for clarity
+    const Messages = {}
+    for (const Channel of SubscribedChannels) {
+        Messages[Channel.channel_id] = CreateStockEmbed(type, data, Channel.channel_id, "Latest ");
+    }
+
+    Logger.info(`Sending push notification to ${SubscribedChannels.length} channels for ${type} stock updates.`);
+    MassSendMessage(Messages)
+    return res.status(200).send({ message: 'Stock data updated and notifications sent.' });
 })
 
 // Update Data Endpoint
