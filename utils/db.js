@@ -34,6 +34,11 @@ const InternalEnsureTables = () => {
             emoji TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS shop_data (
+            type TEXT NOT NULL,
+            visible_items TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS weather_data (
             name TEXT PRIMARY KEY,
             original_name TEXT NOT NULL,
@@ -46,6 +51,22 @@ const InternalEnsureTables = () => {
             timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         )
     `);
+}
+
+export const SetShopVisibilityData = (type, visible_items) => {
+    InternalEnsureTables();
+
+    const stmt = db.prepare("INSERT OR REPLACE INTO shop_data (type, visible_items) VALUES (?, ?)");
+    stmt.run(type, JSON.stringify(visible_items));
+}
+
+export const GetShopVisibilityData = (type) => {
+    InternalEnsureTables();
+
+    const data = db.prepare("SELECT visible_items FROM shop_data WHERE type = ?").get(type);
+    if (!data) return null;
+
+    return JSON.parse(data.visible_items);
 }
 
 export const GetCurrentStockData = (type) => {

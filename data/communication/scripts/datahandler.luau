@@ -21,6 +21,9 @@ local LocalPlayer = Players.LocalPlayer
 local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
 local DataStream = GameEvents:WaitForChild("DataStream")
 
+local ModulesFolder = ReplicatedStorage:WaitForChild("Modules")
+local UpdateServiceModule = ModulesFolder:WaitForChild("UpdateService")
+
 local DataFolder = ReplicatedStorage:WaitForChild("Data")
 local SeedDataModule = DataFolder.SeedData
 local GearDataModule = DataFolder.GearData
@@ -32,6 +35,8 @@ local SeedDataSrc = require(SeedDataModule)
 local GearDataSrc = require(GearDataModule)
 local PetEggsSrc = require(PetEggsModule)
 local EventShopDataSrc = require(EventShopDataModule)
+
+local UpdateServiceSrc = require(UpdateServiceModule)
 
 --// Initialization
 do
@@ -45,6 +50,15 @@ do
         SeedData[Name] = FruitData.FruitIcon
     end
 
+    local VisibleSeeds = {}
+    for Name, Data in SeedDataSrc do
+        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.SeedName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.SeedName)) then
+            continue
+        end
+
+        table.insert(VisibleSeeds, Name)
+    end
+
     --// Gear Data Handler
     local GearData = {}
     for Name, ToolData in GearDataSrc do
@@ -53,6 +67,15 @@ do
         end
 
         GearData[Name] = ToolData.Asset
+    end
+
+    local VisibleGear = {}
+    for Name, Data in GearDataSrc do
+        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.GearName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.GearName)) then
+            continue
+        end
+
+        table.insert(VisibleGear, Name)
     end
 
     --// Pet Data Handler
@@ -65,14 +88,29 @@ do
         PetData[Name] = Data.Icon
     end
 
+    local VisibleEgg = {}
+    for Name, Data in PetEggsSrc do
+        if not Data.DisplayInShop or (UpdateServiceSrc:IsHiddenFromUpdate(Data.EggName) or UpdateServiceSrc:IsHiddenAfterUpdate(Data.EggName)) then
+            continue
+        end
+
+        table.insert(VisibleEgg, Name)
+    end
+
     --// Weather Data Handler
     local WeatherData = workspace:GetAttribute("AllWeather")
 
     --// Data Synchronization Requests
     for Name, Data in pairs({
         ["Seed"] = SeedData,
+        ["SeedVisibilityShop"] = VisibleSeeds,
+
         ["Gear"] = GearData,
+        ["GearVisibilityShop"] = VisibleGear,
+        
         ["Egg"] = PetData,
+        ["EggVisibilityShop"] = VisibleEgg,
+        
         ["Weather"] = WeatherData,
     }) do
         task.spawn(request, {

@@ -1,5 +1,5 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData } from '../../../utils/db.js';
 import { CreateStockEmbed } from '../../../utils/message.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
@@ -67,7 +67,7 @@ app.post("/stock/update/:type", async (req, res) => {
 
 // Update Data Endpoint
 app.post('/data/update/:type', async (req, res) => {
-    const { type } = req.params;
+    let { type } = req.params;
 
     if (!type) {
         return res.status(400).send({ error: 'Missing type parameter' });
@@ -121,6 +121,20 @@ app.post('/data/update/:type', async (req, res) => {
         res.status(200).send({ message: 'Weather data updated successfully' });
         Logger.success('Weather data updated successfully!');
         return;    
+    } else if (type.endsWith("VisibilityShop")) {
+        // Visibility Update
+        type = type.replace("VisibilityShop", "").trim();
+
+        if (!Array.isArray(data) || data.length === 0) {
+            Logger.error('Invalid data format for visibility update');
+            return res.status(400).send({ error: 'Invalid data format' });
+        }
+
+        // Update visibility data
+        SetShopVisibilityData(type, data);
+        res.status(200).send({ message: 'Visibility data updated successfully' });
+        Logger.success(`Visibility data for ${type} updated successfully!`);
+        return;
     }
 
     // Stock Update

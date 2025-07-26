@@ -15,5 +15,5 @@ export const GetAllTrackers = () => {
 }
 
 export const GetAllTimerTrackers = () => {
-    return GetAllTrackers().filter(stock => stock !== "Admin Restock");
+    return GetAllTrackers().filter(stock => stock !== "Admin Restock" && stock !== "Weather");
 }
