@@ -2,6 +2,7 @@
 import { GetStockData, AddStockData, GetWeatherData, AddWeatherData } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { UploadEmoji } from '../../../utils/rest.js';
+import Logger from '../../../logger.js';
 
 import express from 'express';
 import { json, auth } from './middleware.js';
@@ -53,7 +54,7 @@ app.post("/stock/update/:type", async (req, res) => {
 
     const data = req.body;
 
-    console.log(`[Stock] Received update for type: ${type}`, data);
+    Logger.log(`[Stock] Received update for type: ${type}`, data);
 })
 
 // Update Data Endpoint
@@ -69,7 +70,7 @@ app.post('/data/update/:type', async (req, res) => {
     // Weather Update (Edge Case)
     if (type == "Weather") {
         if (!Array.isArray(data) || data.length === 0) {
-            console.error('Invalid data format for weather update');
+            Logger.error('Invalid data format for weather update');
             return res.status(400).send({ error: 'Invalid data format' });
         }
 
@@ -79,7 +80,7 @@ app.post('/data/update/:type', async (req, res) => {
         const DataToInsert = data.filter(weather => !ExistingData.includes(weather));
 
         if (DataToInsert.length === 0) {
-            console.log('No new weather data to update');
+            Logger.info('No new weather data to update');
             return res.status(200).send({ message: 'No new weather data to update' });
         }
 
@@ -110,7 +111,7 @@ app.post('/data/update/:type', async (req, res) => {
         }
 
         res.status(200).send({ message: 'Weather data updated successfully' });
-        console.log('Weather data updated successfully!');
+        Logger.success('Weather data updated successfully!');
         return;    
     }
 
@@ -153,12 +154,12 @@ app.post('/data/update/:type', async (req, res) => {
     }
 
     res.status(200).send({ message: 'Stock data updated successfully' });
-    console.log('Stock data updated successfully!');
+    Logger.success(`Stock data for ${type} updated successfully!`);
 });
 
 
 export const InitServer = () => {
     app.listen(8080, () => {
-        console.log('HTTP server is running on port 8080');
+        Logger.info('Server is running on port 8080');
     })
 }
