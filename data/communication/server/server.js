@@ -6,10 +6,10 @@ import {
 } from '@google/genai';
 
 import { json, auth } from './middleware.js';
-import { MassSendStockMessage, UploadEmoji } from '@/utils/rest.js';
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData } from '@/utils/db.js';
+import { MassSendStockMessage, UploadEmoji } from '../../../utils/rest.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData } from '../../../utils/db.js';
 
-import { ResponseSchema } from '@/ai/weather/schema.js';
+import { ResponseSchema } from '../../../ai/weather/schema.js';
 import fs from 'fs';
 
 // Initialization

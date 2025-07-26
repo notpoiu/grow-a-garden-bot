@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite"
 
-const db = new DatabaseSync("@/data/database.db");
+const db = new DatabaseSync("../data/database.db");
 
 /*
     subscribed_channels: stores channels that have subscribed to stock updates (type specifies the kind of updates).

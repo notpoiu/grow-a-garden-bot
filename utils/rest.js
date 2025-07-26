@@ -1,6 +1,6 @@
 import { GetSubscribedChannels, GetPingRolesForChannel } from "./db.js";
 import { ConcurrencyPool } from "./concurrencypool.js";
-import Ratelimits from "@/ratelimits.js";
+import Ratelimits from "../ratelimits.js";
 import { ContainerBuilder, TextDisplayBuilder, ButtonBuilder, MessageFlags, ButtonStyle, ActionRowBuilder } from 'discord.js';
 
 const MessageWorker = new ConcurrencyPool(Ratelimits.RequestsPerSecond, 1000);
