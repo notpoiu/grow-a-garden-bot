@@ -205,18 +205,19 @@ const getLocalIP = async () => {
 
 
 export const InitServer = async () => {
-    Logger.info("");
-    Logger.info('   ▲ Communication Server');
-    Logger.info('   - Local: http://localhost:8080');
-    Logger.info(`   - Network: http://${await getLocalIP()}:8080`);
-    Logger.info("");
-
     let port = process.env.PORT || 8080;
+    const localIP = await getLocalIP();
     let successfullyStarted = false;
 
     while (!successfullyStarted && port < 9000) {
         try {
             app.listen(port, () => {
+                Logger.info("");
+                Logger.info('   ▲ Communication Server');
+                Logger.info(`   - Local: http://localhost:${port}`);
+                Logger.info(`   - Network: http://${localIP}:${port}`);
+                Logger.info("");
+
                 Logger.success(`${chalk.green('✓')} Server started successfully on port ${port}`);
                 console.log();
             });

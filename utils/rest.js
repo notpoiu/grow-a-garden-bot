@@ -62,6 +62,8 @@ export const UploadEmoji = async (emoji_name, emoji_image) => {
     return response.json();
 }
 
+let AlreadyAlerted = [];
+
 /**
  * GetSlashCommands is a function that retrieves all slash commands from the commands directory.
  * It scans the directory structure and imports each command file.
@@ -83,7 +85,10 @@ export const GetSlashCommands = async () => {
                 if ('data' in command && 'execute' in command) {
                     commands.push(command.data);
                 } else {
-                    Logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+                    if (!AlreadyAlerted.includes(filePath)) {
+                        AlreadyAlerted.push(filePath);
+                        Logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+                    }
                 }
             } catch (error) {
                 Logger.error(`Failed to import command from ${filePath}: ${error.message}`);
@@ -110,7 +115,16 @@ export const SynchronizeSlashCommands = async () => {
                 { body: commands.map(command => command.toJSON())}
             );
 
-            Logger.success(`Successfully synchronized ${commands.length} slash command(s).`);
+            Logger.info("");
+
+            for (let i = 0; i < commands.length; i++) {
+                Logger.info(`${i === 0 ? "┌" : i === commands.length - 1 ? "└" : "├"} ƒ /${commands[i].name}`);
+            }
+
+            Logger.info("");
+
+            Logger.info(`Successfully synchronized ${commands.length} slash command(s).`);
+            
         } catch (error) {
             Logger.error(`Failed to synchronize slash commands: ${error.message}`);
         }

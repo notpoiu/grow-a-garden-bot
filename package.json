@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "source .env && node  --no-warnings index.js"
+    "dev": "node --no-warnings index.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.23",

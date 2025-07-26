@@ -41,6 +41,20 @@ const InternalEnsureTables = () => {
     `);
 }
 
+export const GetStockTypes = () => {
+    InternalEnsureTables();
+
+    const stockTypes = db.prepare("SELECT DISTINCT type FROM stock_data").all();
+    return stockTypes.map(type => type.type);
+}
+
+export const GetAllStockOfType = (type) => {
+    InternalEnsureTables();
+
+    const stockData = db.prepare("SELECT * FROM stock_data WHERE type = ?").all(type);
+    return stockData;
+}
+
 export const GetWeatherData = () => {
     InternalEnsureTables();
 

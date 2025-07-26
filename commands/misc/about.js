@@ -12,7 +12,7 @@ export default {
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: "A Discord bot that sends push notifications for grow a garden restocks.\nBot created and maintianed by [upio](https://www.upio.dev/).",
+                    description: "A Discord bot that sends push notifications for grow a garden restocks.\nBot created and maintained by [upio](https://www.upio.dev/).",
                     ActionRow: [
                         {
                             label: "Support Server",
