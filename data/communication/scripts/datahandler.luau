@@ -168,7 +168,11 @@ DataStream.OnClientEvent:Connect(function(type, id, data)
             }
 
             for _, ItemData in RawStockData do
-                DataToInsert.data[ItemData.EggName] = ItemData.MaxStock
+                if not DataToInsert.data[ItemData.EggName] then
+                    DataToInsert.data[ItemData.EggName] = 0
+                end
+
+                DataToInsert.data[ItemData.EggName] += ItemData.Stock
             end
 
             table.insert(DataBatchQueue, DataToInsert)
