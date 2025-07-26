@@ -8,7 +8,15 @@ import express from 'express';
 import { json, auth } from './middleware.js';
 
 import { GoogleGenAI } from '@google/genai';
+
+import { exec } from "child_process";
+import os from 'os';
 import fs from 'fs';
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+
+import chalk from 'chalk';
 
 // Initialization
 const app = express();
@@ -157,9 +165,70 @@ app.post('/data/update/:type', async (req, res) => {
     Logger.success(`Stock data for ${type} updated successfully!`);
 });
 
+// Utility Functions
 
-export const InitServer = () => {
-    app.listen(8080, () => {
-        Logger.info('Server is running on port 8080');
-    })
+/**
+ * Get the local IP address of the server.
+ */
+const getLocalIP = async () => {
+    const platform = os.platform();
+    let command;
+    
+    if (platform === 'win32') {
+        command = "ipconfig | findstr /i \"IPv4 Address\"";
+    } else if (platform === 'darwin') {
+        command = "ipconfig getifaddr en0";
+    } else {
+        command = "hostname -I | awk '{print $1}'";
+    }
+    
+    try {
+        const { stdout, stderr } = await execAsync(command);
+        
+        if (stderr) {
+            throw new Error(stderr);
+        }
+        
+        let ip = stdout.trim();
+        
+        // Clean up Windows output format if needed
+        if (platform === 'win32' && ip) {
+            const match = ip.match(/\d+\.\d+\.\d+\.\d+/);
+            ip = match ? match[0] : 'Not found';
+        }
+        
+        return ip;
+    } catch (error) {
+        return 'Not available';
+    }
+};
+
+
+export const InitServer = async () => {
+    Logger.info("");
+    Logger.info('   ▲ Communication Server');
+    Logger.info('   - Local: http://localhost:8080');
+    Logger.info(`   - Network: http://${await getLocalIP()}:8080`);
+    Logger.info("");
+
+    let port = process.env.PORT || 8080;
+    let successfullyStarted = false;
+
+    while (!successfullyStarted && port < 9000) {
+        try {
+            app.listen(port, () => {
+                Logger.success(`${chalk.green('✓')} Server started successfully on port ${port}`);
+                console.log();
+            });
+            successfullyStarted = true;
+        } catch (error) {
+            Logger.error(`Failed to start server on port ${port}: ${error.message} - trying port ${port + 1} instead`);
+            port += 1;
+        }
+    }
+
+    if (!successfullyStarted) {
+        Logger.error('Failed to start server on any port from 8080 to 9000');
+        throw new Error('Server failed to start');
+    }
 }

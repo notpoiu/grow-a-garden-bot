@@ -1,7 +1,7 @@
 // Initialization
 import 'dotenv/config';
 
-console.log(`    ▲ GAG Stock Bot - by upio
+console.log(`    GAG Stock Bot - by upio
 
     ┌ ○ Environment: ${process.env.NODE_ENV || "development"}
     ├ ○ Version: ${process.env.VERSION || "1.0.0"}
@@ -58,11 +58,18 @@ client.commands = new Collection();
 
 // Event Handlers
 client.once(Events.ClientReady, readyClient => {
-	Logger.success(`Ready! Logged in as ${readyClient.user.tag}`);
-    SynchronizeSlashCommands();
+	Logger.success(`Logged in as ${readyClient.user.tag}`);
+    
+    console.log();
 
     Logger.info("Starting communication server...");
-    InitServer();
+    InitServer().then(() => {
+        
+        SynchronizeSlashCommands()
+
+    }).catch(error => {
+        Logger.error(`Failed to initialize server: ${error.message}`);
+    });
 });
 
 client.on(Events.InteractionCreate, async interaction => {
