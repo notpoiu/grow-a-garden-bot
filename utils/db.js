@@ -28,6 +28,12 @@ const InternalEnsureTables = () => {
             FOREIGN KEY (channel_id, stock_type) REFERENCES subscribed_channels(channel_id, type) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS reaction_role_messages (
+            message_id TEXT PRIMARY KEY,
+            channel_id TEXT NOT NULL,
+            stock_type TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS stock_data (
             type TEXT NOT NULL,
             rbxassetid TEXT NOT NULL,
@@ -52,6 +58,17 @@ const InternalEnsureTables = () => {
             timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         )
     `);
+}
+
+export const AddReactionRoleMessage = (message_id, channel_id, stock_type) => {
+    InternalEnsureTables();
+    const stmt = db.prepare("INSERT OR REPLACE INTO reaction_role_messages (message_id, channel_id, stock_type) VALUES (?, ?, ?)");
+    stmt.run(message_id, channel_id, stock_type);
+}
+
+export const GetReactionRoleMessage = (message_id) => {
+    InternalEnsureTables();
+    return db.prepare("SELECT channel_id, stock_type FROM reaction_role_messages WHERE message_id = ?").get(message_id);
 }
 
 export const SetShopVisibilityData = (type, visible_items) => {
@@ -138,8 +155,8 @@ export const AddStockData = (type, rbxassetid, name, emoji) => {
 export const GetPingRolesForChannel = (channel_id, stock_type) => {
     InternalEnsureTables();
 
-    const roles = db.prepare("SELECT role_id FROM roles WHERE channel_id = ? AND stock_type = ?").all(channel_id, stock_type);
-    return roles.map(role => role.role_id);
+    const roles = db.prepare("SELECT * FROM roles WHERE channel_id = ? AND stock_type = ?").all(channel_id, stock_type);
+    return roles;
 }
 
 export const GetPingRoles = (stock_type) => {
@@ -172,8 +189,8 @@ export const IsChannelSubscribed = (channel_id, type) => {
 
 export const AddPingRole = (channel_id, role_id, name, stock_type) => {
     InternalEnsureTables();
-
-    const stmt = db.prepare("INSERT OR IGNORE INTO roles (channel_id, role_id, name, stock_type) VALUES (?, ?, ?, ?)");
+    
+    const stmt = db.prepare("INSERT OR REPLACE INTO roles (channel_id, role_id, name, stock_type) VALUES (?, ?, ?, ?)");
     stmt.run(channel_id, role_id, name, stock_type);
 }
 

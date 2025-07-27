@@ -12,12 +12,13 @@ console.log(`    GAG Stock Bot - by upio
 // imports
 import { InitServer } from "./data/communication/server/server.js";
 import { SynchronizeSlashCommands, GetSlashCommands } from "./utils/rest.js";
+import { GetReactionRoleMessage } from "./utils/db.js";
 import { CreateEmbed } from "./utils/message.js";
 import Logger from './logger.js';
 
 // Discord Bot
 import { Client, Events, GatewayIntentBits, Collection, MessageFlags } from 'discord.js';
-import { int } from 'drizzle-orm/mysql-core';
+import { AddPingRole } from './utils/db.js';
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
@@ -103,8 +104,13 @@ client.on(Events.InteractionCreate, async interaction => {
         // Reaction Roles
         if (id.startsWith("reactionrole_")) {
             await interaction.deferReply({ flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
-            
-            const stock = id.split("_")[1];
+
+            const messageContext = GetReactionRoleMessage(interaction.message.id);
+            if (!messageContext) {
+                return await interaction.editReply({ content: "This reaction role message is no longer valid." });
+            }
+
+            const { channel_id: tracking_channel_id, stock_type: stock } = messageContext;
             const selectedValues = interaction.values;
 
             let errored = false;
@@ -143,6 +149,8 @@ client.on(Events.InteractionCreate, async interaction => {
                             permissions: [],
                             reason: `Reaction role for ${value} restock updates`
                         });
+
+                        AddPingRole(tracking_channel_id, stockRole.id, StockName, stock);
                     }
                     return stockRole.id;
                 });

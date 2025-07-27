@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags, StringSelectMenuBuilder, ActionRowBuilder } from "discord.js";
-import { IsChannelSubscribed, GetShopVisibilityData, GetEmojiForStock } from "../../utils/db.js";
+import { IsChannelSubscribed, GetShopVisibilityData, GetEmojiForStock, AddReactionRoleMessage } from "../../utils/db.js";
 import { CreateEmbed, EmojiMappings } from "../../utils/message.js";
 import { GetAllTrackers } from "../../utils/utils.js";
 
@@ -117,5 +117,8 @@ export default {
             ],
             flags: MessageFlags.IsComponentsV2
         });
+
+        const message = await interaction.fetchReply();
+        AddReactionRoleMessage(message.id, tracking_channel.id, stock);
     }
 }

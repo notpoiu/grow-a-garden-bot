@@ -9,7 +9,6 @@ import {
 } from 'discord.js';
 
 import { GetPingRolesForChannel, GetEmojiForStock } from "./db.js";
-import ping from '../commands/misc/ping.js';
 
 export const EmojiMappings = {
     "Seed": "🌱",
@@ -119,20 +118,22 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
 
         let PingText = "";
         for (const role of ping_roles) {
-            if (restock_data[role.name] === undefined) {
+            if (Data[role.name] === undefined) {
                 continue;
             }
 
             PingText += `<@&${role.role_id}> `;
         }
 
-        if (ping_roles.length !== 0) {
+        if (ping_roles.length !== 0 && PingText.length > 0) {
             MessageData.components.unshift(
                 CreateText(`-# ${PingText}`)
             )
         }
 
+        MessageData["allowed_mentions"] = {
+            parse: ["roles"]
+        }
     }
-
     return MessageData;
 }
