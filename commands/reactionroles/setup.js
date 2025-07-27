@@ -134,16 +134,24 @@ export default {
             );
         });
 
+        const GetStockName = (roleName) => {
+            const stockName = OptionArray.find(option => roleName.toLowerCase().includes(option.toLowerCase()));
+            return stockName ? stockName : null;
+        }
+
         for (const role of dbRoles.values()) {
-            AddPingRole(tracking_channel.id, role.id, role.name.replace(" Ping", ""), stock);
+            const stockName = GetStockName(role.name);
+            if (!stockName) continue;
+
+            AddPingRole(tracking_channel.id, role.id, stockName, stock);
         }
 
         await interaction.reply({
             components: [
                 CreateEmbed({
                     title: "Reaction Roles Setup",
-                    description: `Successfully set up reaction roles for **${stock}** in ${tracking_channel}. You can now select roles to receive notifications for stock updates.\n\n**[Detected Role Mappings]:**\n${dbRoles.length === 0 ? "*No Roles Detected*" : dbRoles.map(role => `${GetEmoji(role.name.replaceAll(" Ping", ""))}${role.name.replaceAll(" Ping", "")} ↔ <@&${role.id}>`).join('\n')}`,
-                    footer: "You can configure this further by using the /reactionroles manage command.",
+                    description: `Successfully set up reaction roles for **${stock}** in ${tracking_channel}. You can now select roles to receive notifications for stock updates.\n\n**[Automatic Role Mappings Detection]:**\n${dbRoles.length === 0 ? "*No Roles Detected*" : dbRoles.map(role => `${GetEmoji(GetStockName(role.name))}${GetStockName(role.name)} ↔ <@&${role.id}> (${role.name})`).join('\n')}`,
+                    footer: "You can configure this further by using the /reactionroles manage command (coming soon).",
                 })
             ],
             flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
