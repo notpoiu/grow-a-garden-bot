@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CreateEmbed } from "../../utils/message.js";
 import { GetAllTrackers } from "../../utils/utils.js";
-import { AddSubscribedChannel } from "../../utils/db.js";
+import { AddSubscribedChannel, IsChannelSubscribed } from "../../utils/db.js";
 
 const StockChoices = GetAllTrackers()
     .map(stock => ({
@@ -55,6 +55,19 @@ export default {
                     })
                 ],
                 flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
+
+        if (IsChannelSubscribed(channel.id, stock)) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Tracking Setup",
+                        description: `You are already tracking **${stock}** in ${channel}.`,
+                        footer: "You can stop tracking this stock using the /untrack command.",
+                    })
+                ],
+                flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
             });
         }
 

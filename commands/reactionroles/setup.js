@@ -1,9 +1,9 @@
 import { SlashCommandBuilder, MessageFlags, StringSelectMenuBuilder, ActionRowBuilder } from "discord.js";
-import { IsChannelSubscribed, GetShopVisibilityData, GetEmojiForStock, AddReactionRoleMessage } from "../../utils/db.js";
+import { IsChannelSubscribed, AddReactionRoleMessage } from "../../utils/db.js";
 import { CreateEmbed, EmojiMappings } from "../../utils/message.js";
-import { GetAllTrackers } from "../../utils/utils.js";
+import { GetAllTrackers, GetSortedStockData, GetEmoji } from "../../utils/utils.js";
 
-const StockChoices = GetAllTrackers()
+const StockChoices = GetAllTrackers(false) // Exclude Admin Restock from reaction roles
     .map(stock => ({
         name: stock,
         value: stock
@@ -73,7 +73,7 @@ export default {
         }
 
         // Build the select menu options based on the stock visibility data
-        const OptionArray = GetShopVisibilityData(stock);
+        const OptionArray = GetSortedStockData(stock);
         const SelectOptions = [];
 
         for (const option of OptionArray) {
@@ -81,7 +81,7 @@ export default {
                 label: option,
                 value: `reactionrole_${option}`,
                 description: `Get notified when ${option} becomes available`,
-                emoji: GetEmojiForStock(option)
+                emoji: GetEmoji(option)
             });
         }
 

@@ -1,8 +1,9 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, GetStockTypes } from '../../../utils/db.js';
 import { CreateStockEmbed } from '../../../utils/message.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
+import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
 import { MassSendMessage, UploadEmoji } from '../../../utils/rest.js';
 import Logger from '../../../logger.js';
 
@@ -42,9 +43,14 @@ app.post("/stock/update/:type", async (req, res) => {
     const data = req.body;
 
     Logger.info(`Received stock update for type ${type} at ${new Date().toISOString()}.`);
-    
+
+    let ExpendedType = type;
+    if (type === "Admin Restock") {
+        ExpendedType = data["shop"]
+    }
+
     // Update Stock Data
-    SetCurrentStockData(type, data);
+    SetCurrentStockData(ExpendedType, data);
 
     // Send Push Notification
     const SubscribedChannels = GetSubscribedChannels(type);
@@ -53,11 +59,17 @@ app.post("/stock/update/:type", async (req, res) => {
         return res.status(200).send({ message: 'No channels subscribed to this stock type.' });
     }
 
-    // Create Stock Embed for each subscribed channel with pings
-    // Prefix the stock name with "Latest " for clarity
-    const Messages = {}
+    const Messages = {};
+
+    // Handle Stocks
+    const GenerateEmbedFunction = GetDesignatedMsgGenerationFunction(type);
+    if (!GenerateEmbedFunction) {
+        Logger.error(`No message generation function found for stock type: ${type}`);
+        return res.status(400).send({ error: 'Invalid stock type' });
+    }
+
     for (const Channel of SubscribedChannels) {
-        Messages[Channel.channel_id] = CreateStockEmbed(type, data, Channel.channel_id, "Latest ");
+        Messages[Channel.channel_id] = GenerateEmbedFunction(type, data, Channel.channel_id, "Latest ");
     }
 
     Logger.info(`Sending push notification to ${SubscribedChannels.length} channels for ${type} stock updates.`);

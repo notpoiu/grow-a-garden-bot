@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const db = new DatabaseSync(join(__dirname, "../data/database.db"));
+const db = new DatabaseSync(join(__dirname, "../data/database.db"), {});
 
 /*
     subscribed_channels: stores channels that have subscribed to stock updates (type specifies the kind of updates).
@@ -128,7 +128,7 @@ export const GetWeatherData = () => {
     InternalEnsureTables();
 
     const weatherData = db.prepare("SELECT * FROM weather_data").all();
-    return weatherData;
+    return weatherData
 }
 
 export const AddWeatherData = (name, original_name, emoji) => {

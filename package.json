@@ -16,6 +16,7 @@
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "grapheme-splitter": "^1.0.4",
     "mime": "^4.0.7"
   }
 }

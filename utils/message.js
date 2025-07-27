@@ -8,13 +8,14 @@ import {
     MessageFlags
 } from 'discord.js';
 
-import { GetPingRolesForChannel, GetEmojiForStock } from "./db.js";
+import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData } from "./db.js";
 
 export const EmojiMappings = {
     "Seed": "🌱",
     "Weather": "☀️",
     "Egg": "🥚",
     "Gear": "🔨",
+    "Admin Restock": "👑",
 }
 
 export const ConnectorEmojis = {
@@ -123,6 +124,112 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
             }
 
             PingText += `<@&${role.role_id}> `;
+        }
+
+        if (ping_roles.length !== 0 && PingText.length > 0) {
+            MessageData.components.unshift(
+                CreateText(`-# ${PingText}`)
+            )
+        }
+
+        MessageData["allowed_mentions"] = {
+            parse: ["roles"]
+        }
+    }
+    return MessageData;
+}
+
+/**
+ * 
+ * Creates a stock embed message.
+ * 
+ * @param {string} Type 
+ * @param {Object} Data 
+ * @param {number | undefined} ChannelID 
+ * @returns 
+ */
+export const CreateEventEmbed = (EventType, Name, Timeout, ChannelID) => {
+    const WeatherData = GetWeatherData();
+    let Data = WeatherData.find(w => w.original_name === Name) || {
+        emoji: "",
+        name: Name,
+    }
+
+    const MessageData = {
+        components: [
+            CreateEmbed({
+                title: `${EmojiMappings[EventType] == undefined ? "" : EmojiMappings[EventType] + " "}${EventType} Notifier`,
+                description: EventType == "Weather" ? `The weather is now set to **"${Data.emoji} ${Data.name}"**\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:R> (${Timeout} seconds)` : `The **"${Data.emoji}${Data.name}"** special event has started.\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:r> (${Timeout} seconds)`,
+                footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
+                ActionRow: [
+                    {
+                        label: "Quick Join",
+                        link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
+                    }
+                ]
+            })
+        ],
+        flags: MessageFlags.IsComponentsV2
+    }
+
+
+    if (ChannelID) {
+        const ping_roles = GetPingRolesForChannel(ChannelID, EventType);
+
+        let PingText = "";
+        for (const role of ping_roles) {
+            if (Data[role.name] === undefined) {
+                continue;
+            }
+
+            PingText += `<@&${role.role_id}> `;
+        }
+
+        if (ping_roles.length !== 0 && PingText.length > 0) {
+            MessageData.components.unshift(
+                CreateText(`-# ${PingText}`)
+            )
+        }
+
+        MessageData["allowed_mentions"] = {
+            parse: ["roles"]
+        }
+    }
+    return MessageData;
+}
+
+/** * Creates an admin restock embed message.
+ * @param {string} Type - The type of stock.
+ * @param {string} Stock - The stock name.
+ * @param {number} ChannelID - The channel ID to send the embed to.
+ * @returns {ContainerBuilder} The admin restock embed message container.
+ */
+export const CreateAdminRestockEmbed = (Type, Stock, ChannelID) => {
+    const MessageData = {
+        components: [
+            CreateEmbed({
+                title: `${EmojiMappings["Admin Restock"]} Admin Restock`,
+                description: `**${GetEmojiForStock(Stock)}${Stock}** has been restocked!`,
+                footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
+                ActionRow: [
+                    {
+                        label: "Quick Join",
+                        link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
+                    }
+                ]
+            })
+        ],
+        flags: MessageFlags.IsComponentsV2
+    }
+
+    if (ChannelID) {
+        const ping_roles = GetPingRolesForChannel(ChannelID, Type);
+
+        let PingText = "";
+        for (const role of ping_roles) {
+            if (role.name === Stock) {
+                PingText += `<@&${role.role_id}> `;
+            }
         }
 
         if (ping_roles.length !== 0 && PingText.length > 0) {

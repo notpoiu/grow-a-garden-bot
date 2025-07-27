@@ -43,6 +43,17 @@ local EventShopDataSrc = require(EventShopDataModule)
 
 local UpdateServiceSrc = require(UpdateServiceModule)
 
+--// Functions
+local function RemoveRichText(str)
+    str = str:gsub("<br%s*/>", "\n")
+    return str:gsub("<[^<>]->", "")
+end
+
+local function ExtractItemAndShop(message) -- [ItemName] was restocked in the [ShopName] shop!
+    local itemName, shopName = string.match(message, "^(.-) was restocked in the (.-) shop!?$")
+    return itemName, tostring(shopName or ""):gsub("^%l", string.upper)
+end
+
 --// Initialization
 do
     --// Helper Functions
@@ -269,10 +280,76 @@ end)
 
 --// Weather
 ReplicatedStorage.GameEvents.WeatherEventStarted.OnClientEvent:Connect(function(weather, timeout)
-    
+    if not weather or not timeout then
+        return
+    end
+
+    if timeout < 10 then
+        warn(`[Weather] Timeout is less than 10 seconds: {timeout}`)
+        return
+    end
+
+    task.spawn(request, {
+        Url = `{BaseURL}/stock/update/Weather`,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json",
+            ["Authorization"] = APIKey,
+        },
+        Body = HttpService:JSONEncode({
+            ["name"] = weather,
+            ["timeout"] = timeout,
+        }),
+    })
+    print(`[Weather] Sent Weather: {weather} with Timeout: {timeout} to Server`)
 end)
 
 --// Special Events (e.g. Bee Swarm)
 ReplicatedStorage.GameEvents.SpecialEventStarted.OnClientEvent:Connect(function(event, timeout)
-    
+    if not event or not timeout then
+        return
+    end
+
+    if timeout < 10 then
+        warn(`[SpecialEvent] Timeout is less than 10 seconds: {timeout}`)
+        return
+    end
+
+    task.spawn(request, {
+        Url = `{BaseURL}/stock/update/Weather`,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json",
+            ["Authorization"] = APIKey,
+        },
+        Body = HttpService:JSONEncode({
+            ["name"] = event,
+            ["timeout"] = timeout,
+        }),
+    })
+    print(`[SpecialEvent] Sent Event: {event} with Timeout: {timeout} to Server`)
+end)
+
+--// Admin Restock
+ReplicatedStorage.GameEvents.Notification.OnClientEvent:Connect(function(message, something, timeout)
+    message = tostring(message)
+
+    if message:match("was restocked in the") then
+        local itemName, shopName = ExtractItemAndShop(RemoveRichText(message))
+        if not itemName then return end
+
+        task.spawn(request, {
+            Url = `{BaseURL}/stock/update/Admin%20Restock`,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json",
+                ["Authorization"] = APIKey,
+            },
+            Body = HttpService:JSONEncode({
+                ["shop"] = shopName,
+                ["stock"] = itemName,
+            }),
+        })
+        print(`[AdminRestock] Sent Restock for {itemName} in {shopName} to Server`)
+    end
 end)
