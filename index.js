@@ -116,22 +116,8 @@ client.on(Events.InteractionCreate, async interaction => {
             let errored = false;
 
             try {
-                const selectMenu = interaction.message.components
-                    .flatMap(row => row.components)
-                    .find(component => component.customId === interaction.customId);
-
-                if (!selectMenu) {
-                    throw new Error("Could not find the select menu on the message.");
-                }
-
-                const allPossibleRoleNames = new Set(selectMenu.options.map(option => {
-                    return `${option.label} Ping`;
-                }));
-
-                const allStockRoles = interaction.guild.roles.cache.filter(role =>
-                    allPossibleRoleNames.has(role.name)
-                );
-                const allStockRoleIds = new Set(allStockRoles.map(r => r.id));
+                const dbRoles = GetPingRolesForChannel(tracking_channel_id, stock);
+                const allStockRoleIds = new Set(dbRoles.map(r => r.role_id));
 
                 const memberRolesToKeep = interaction.member.roles.cache.filter(role => !allStockRoleIds.has(role.id));
 
@@ -139,11 +125,26 @@ client.on(Events.InteractionCreate, async interaction => {
                     const StockName = value.replace("reactionrole_", "");
                     const RoleName = `${StockName} Ping`;
                     
-                    let stockRole = interaction.guild.roles.cache.find(role => 
-                        role.name === RoleName
-                    );
-
-                    if (!stockRole) {
+                    // Check database for existing role
+                    const existingDbRole = dbRoles.find(dbRole => dbRole.name === StockName);
+                    
+                    let stockRole;
+                    if (existingDbRole) {
+                        // Try to get the role from guild cache
+                        stockRole = interaction.guild.roles.cache.get(existingDbRole.role_id);
+                        
+                        // If role doesn't exist in guild anymore, create new one and update database
+                        if (!stockRole) {
+                            stockRole = await interaction.guild.roles.create({
+                                name: RoleName,
+                                permissions: [],
+                                reason: `Reaction role for ${value} restock updates`
+                            });
+                            
+                            AddPingRole(tracking_channel_id, stockRole.id, StockName, stock);
+                        }
+                    } else {
+                        // Create new role and add to database
                         stockRole = await interaction.guild.roles.create({
                             name: RoleName,
                             permissions: [],
@@ -152,6 +153,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
                         AddPingRole(tracking_channel_id, stockRole.id, StockName, stock);
                     }
+                    
                     return stockRole.id;
                 });
 
