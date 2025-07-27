@@ -32,6 +32,14 @@ const ai = new GoogleGenAI({
 app.use(json, auth);
 
 // Routes
+app.get("/", (req, res) => {
+    res.send("Stock Communication Server is running!");
+});
+
+app.get("/script", (req, res) => {
+    res.sendFile("datahandler.luau", { root: "data/communication/scripts" });
+});
+
 // Update Stock Endpoint
 app.post("/stock/update/:type", async (req, res) => {
     const { type } = req.params;

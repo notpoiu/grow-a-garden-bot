@@ -1,6 +1,6 @@
 --// Config
-local BaseURL = "http://localhost:8080"
-local APIKey = "Mango"
+local BaseURL = base_url
+local APIKey = api_key
 
 local EventShopPresent = true
 
