@@ -163,6 +163,13 @@ export const RemoveSubscribedChannel = (channel_id, type) => {
     stmt.run(channel_id, type);
 }
 
+export const IsChannelSubscribed = (channel_id, type) => {
+    InternalEnsureTables();
+
+    const result = db.prepare("SELECT 1 FROM subscribed_channels WHERE channel_id = ? AND type = ?").get(channel_id, type);
+    return !!result;
+}
+
 export const AddPingRole = (channel_id, role_id, name, stock_type) => {
     InternalEnsureTables();
 

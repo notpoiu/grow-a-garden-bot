@@ -1,5 +1,6 @@
-import { SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateEmbed } from "../../utils/message.js";
+import { SlashCommandBuilder, MessageFlags, StringSelectMenuBuilder, ActionRowBuilder } from "discord.js";
+import { IsChannelSubscribed, GetShopVisibilityData, GetEmojiForStock } from "../../utils/db.js";
+import { CreateEmbed, EmojiMappings } from "../../utils/message.js";
 import { GetAllTrackers } from "../../utils/utils.js";
 
 const StockChoices = GetAllTrackers()
@@ -21,8 +22,9 @@ export default {
                 )
         )
         .addChannelOption(option =>
-            option.setName('channel')
-                .setDescription('The channel to setup reaction roles in (if not specified, the current channel will be used)')
+            option.setName('tracking-channel')
+                .setDescription('The channel where the tracking is set up')
+                .setRequired(true)
         ),
 
     async execute(interaction) {
@@ -55,6 +57,65 @@ export default {
         }
 
         const stock = interaction.options.getString("stock");
-        const channel = interaction.options.getChannel("channel") || interaction.channel;
+        const tracking_channel = interaction.options.getChannel("tracking-channel") || interaction.channel;
+
+        if (!IsChannelSubscribed(tracking_channel.id, stock)) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Reaction Roles Setup",
+                        description: `You need to track the stock **${stock}** in ${tracking_channel} before setting up reaction roles. Use the /track command to start tracking this stock.`,
+                        footer: "Once tracking is set up, you can create reaction roles for stock updates.",
+                    })
+                ],
+                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
+
+        // Build the select menu options based on the stock visibility data
+        const OptionArray = GetShopVisibilityData(stock);
+        const SelectOptions = [];
+
+        for (const option of OptionArray) {
+            SelectOptions.push({
+                label: option,
+                value: `reactionrole_${option}`,
+                description: `Get notified when ${option} becomes available`,
+                emoji: GetEmojiForStock(option)
+            });
+        }
+
+        // Split options into chunks of 25 (Discord's max limit for select menu options)
+        const chunks = [];
+        for (let i = 0; i < SelectOptions.length; i += 25) {
+            chunks.push(SelectOptions.slice(i, i + 25));
+        }
+
+        // Create select menus for each chunk
+        const actionRows = [];
+        const embedComponent = CreateEmbed({
+            title: `${EmojiMappings[stock] == undefined ? "" : EmojiMappings[stock] + " "}${stock} Reaction Roles`,
+            description: `Select a role to receive notifications for ${stock} stock updates.${chunks.length > 1 ? `\n\n**Note:** Options are split across ${chunks.length} menus due to Discord's 25-option limit.` : ''}`,
+        });
+
+        chunks.forEach((chunk, index) => {
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId(`reactionrole_${stock}_${index}`)
+                .setPlaceholder(`Select a reaction role ${chunks.length > 1 ? `(Menu ${index + 1}/${chunks.length})` : ''}`)
+                .setMinValues(0)
+                .setMaxValues(chunk.length)
+                .addOptions(chunk);
+            
+            actionRows.push(new ActionRowBuilder().addComponents(selectMenu));
+        });
+
+        // Send the initial response
+        await interaction.reply({
+            components: [
+                embedComponent,
+                ...actionRows
+            ],
+            flags: MessageFlags.IsComponentsV2
+        });
     }
 }

@@ -12,10 +12,12 @@ console.log(`    GAG Stock Bot - by upio
 // imports
 import { InitServer } from "./data/communication/server/server.js";
 import { SynchronizeSlashCommands, GetSlashCommands } from "./utils/rest.js";
+import { CreateEmbed } from "./utils/message.js";
 import Logger from './logger.js';
 
 // Discord Bot
 import { Client, Events, GatewayIntentBits, Collection, MessageFlags } from 'discord.js';
+import { int } from 'drizzle-orm/mysql-core';
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
@@ -73,25 +75,122 @@ client.once(Events.ClientReady, readyClient => {
 });
 
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
+	// Slash Command Handling
+    if (interaction.isChatInputCommand()) {
+        const command = interaction.client.commands.get(interaction.commandName);
+    
+        if (!command) {
+            console.error(`No command matching ${interaction.commandName} was found.`);
+            return;
+        }
+    
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+            } else {
+                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+            }
+        }
+    }
 
-	const command = interaction.client.commands.get(interaction.commandName);
+    // String Select Menu Handling
+    if (interaction.isStringSelectMenu()) {
+        const id = interaction.customId;
 
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
+        // Reaction Roles
+        if (id.startsWith("reactionrole_")) {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 });
+            
+            const stock = id.split("_")[1];
+            const selectedValues = interaction.values;
 
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-		}
-	}
+            let errored = false;
+
+            try {
+                const selectMenu = interaction.message.components
+                    .flatMap(row => row.components)
+                    .find(component => component.customId === interaction.customId);
+
+                if (!selectMenu) {
+                    throw new Error("Could not find the select menu on the message.");
+                }
+
+                const allPossibleRoleNames = new Set(selectMenu.options.map(option => {
+                    return `${option.label} Ping`;
+                }));
+
+                const allStockRoles = interaction.guild.roles.cache.filter(role =>
+                    allPossibleRoleNames.has(role.name)
+                );
+                const allStockRoleIds = new Set(allStockRoles.map(r => r.id));
+
+                const memberRolesToKeep = interaction.member.roles.cache.filter(role => !allStockRoleIds.has(role.id));
+
+                const rolesToAddPromises = selectedValues.map(async (value) => {
+                    const StockName = value.replace("reactionrole_", "");
+                    const RoleName = `${StockName} Ping`;
+                    
+                    let stockRole = interaction.guild.roles.cache.find(role => 
+                        role.name === RoleName
+                    );
+
+                    if (!stockRole) {
+                        stockRole = await interaction.guild.roles.create({
+                            name: RoleName,
+                            permissions: [],
+                            reason: `Reaction role for ${value} restock updates`
+                        });
+                    }
+                    return stockRole.id;
+                });
+
+                const rolesToAdd = await Promise.all(rolesToAddPromises);
+
+                const finalRoles = [...memberRolesToKeep.keys(), ...rolesToAdd];
+                await interaction.member.roles.set(finalRoles);
+            } catch (error) {
+                errored = true;
+                Logger.error(`Failed to handle reaction role interaction: ${error.message}`);
+                
+                const ErrorEmbed = CreateEmbed({
+                    title: "⚠️ Error | Reaction Roles",
+                    description: "There was an error while processing your reaction role request. Please try again later.",
+                    footer: "If the issue persists, contact an admin.",
+                })
+
+                const MessageData = {
+                    components: [ErrorEmbed],
+                    flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+                }
+                
+                if (interaction.replied || interaction.deferred) {
+                    return await interaction.followUp(MessageData)
+                }
+
+                return await interaction.reply(MessageData);
+            }
+
+            if (!errored) {
+                const description = selectedValues.length > 0 
+                    ? `Successfully updated your reaction roles for **${stock}** stock.`
+                    : `Successfully removed all reaction roles for **${stock}** stock.`;
+
+                await interaction.editReply({
+                    components: [
+                        CreateEmbed({
+                            title: "Reaction Role Updated",
+                            description: description,
+                            footer: "You can change your selection at any time using the same menu.",
+                        })
+                    ],
+                    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+                });
+            }
+        }
+    }
 });
 
 // Login
