@@ -21,7 +21,7 @@ const InternalEnsureTables = () => {
 
         CREATE TABLE IF NOT EXISTS roles (
             channel_id TEXT NOT NULL,
-            role_id TEXT NOT NULL,
+            role_id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
             stock_type TEXT NOT NULL,
 
@@ -68,7 +68,18 @@ export const AddReactionRoleMessage = (message_id, channel_id, stock_type) => {
 
 export const GetReactionRoleMessage = (message_id) => {
     InternalEnsureTables();
-    return db.prepare("SELECT channel_id, stock_type FROM reaction_role_messages WHERE message_id = ?").get(message_id);
+    return db.prepare("SELECT * FROM reaction_role_messages WHERE message_id = ?").get(message_id);
+}
+
+export const GetReactionRoleMessageInChannel = (channel_id, stock_type) => {
+    InternalEnsureTables();
+    return db.prepare("SELECT * FROM reaction_role_messages WHERE channel_id = ? AND stock_type = ?").get(channel_id, stock_type);
+}
+
+export const RemoveReactionRoleMessage = (message_id) => {
+    InternalEnsureTables();
+    const stmt = db.prepare("DELETE FROM reaction_role_messages WHERE message_id = ?");
+    stmt.run(message_id);
 }
 
 export const SetShopVisibilityData = (type, visible_items) => {

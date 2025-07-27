@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, MessageFlags, StringSelectMenuBuilder, ActionRowBuilder } from "discord.js";
-import { IsChannelSubscribed, AddReactionRoleMessage } from "../../utils/db.js";
+import { IsChannelSubscribed, AddReactionRoleMessage, AddPingRole, GetReactionRoleMessageInChannel, RemoveReactionRoleMessage } from "../../utils/db.js";
 import { CreateEmbed, EmojiMappings } from "../../utils/message.js";
 import { GetAllTrackers, GetSortedStockData, GetEmoji } from "../../utils/utils.js";
 
@@ -110,7 +110,13 @@ export default {
         });
 
         // Send the initial response
-        await interaction.reply({
+        const ExistingMessage = GetReactionRoleMessageInChannel(tracking_channel.id, stock)
+
+        if (ExistingMessage) {
+            RemoveReactionRoleMessage(ExistingMessage.id);
+        }
+
+        const message = await interaction.channel.send({
             components: [
                 embedComponent,
                 ...actionRows
@@ -118,7 +124,29 @@ export default {
             flags: MessageFlags.IsComponentsV2
         });
 
-        const message = await interaction.fetchReply();
         AddReactionRoleMessage(message.id, tracking_channel.id, stock);
+
+        // Map existing roles to their stock names
+        const dbRoles = interaction.guild.roles.cache.filter(role => {
+            const roleName = role.name.toLowerCase();
+            return roleName.includes('ping') && OptionArray.some(option => 
+                roleName.includes(option.toLowerCase())
+            );
+        });
+
+        for (const role of dbRoles.values()) {
+            AddPingRole(tracking_channel.id, role.id, role.name.replace(" Ping", ""), stock);
+        }
+
+        await interaction.reply({
+            components: [
+                CreateEmbed({
+                    title: "Reaction Roles Setup",
+                    description: `Successfully set up reaction roles for **${stock}** in ${tracking_channel}. You can now select roles to receive notifications for stock updates.\n\n**[Detected Role Mappings]:**\n${dbRoles.length === 0 ? "*No Roles Detected*" : dbRoles.map(role => `${GetEmoji(role.name.replaceAll(" Ping", ""))}${role.name.replaceAll(" Ping", "")} ↔ <@&${role.id}>`).join('\n')}`,
+                    footer: "You can configure this further by using the /reactionroles manage command.",
+                })
+            ],
+            flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+        });
     }
 }

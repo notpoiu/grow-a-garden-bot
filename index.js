@@ -12,7 +12,7 @@ console.log(`    GAG Stock Bot - by upio
 // imports
 import { InitServer } from "./data/communication/server/server.js";
 import { SynchronizeSlashCommands, GetSlashCommands } from "./utils/rest.js";
-import { GetReactionRoleMessage } from "./utils/db.js";
+import { GetReactionRoleMessage, GetPingRolesForChannel } from "./utils/db.js";
 import { CreateEmbed } from "./utils/message.js";
 import Logger from './logger.js';
 
