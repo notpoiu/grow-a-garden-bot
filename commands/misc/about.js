@@ -1,4 +1,5 @@
 import { ApplicationIntegrationType, InteractionContextType, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { client } from "../../index.js";
 import { CreateEmbed } from "../../utils/message.js";
 
 export default {
@@ -14,7 +15,7 @@ export default {
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size} servers** and **${interaction.client.users.cache.size} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
+                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${client.application.approximateGuildCount} servers** and **${client.application.approximateUserInstallCount} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
                     ActionRow: [
                         {
                             label: "Support Server",

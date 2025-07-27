@@ -20,7 +20,7 @@ import Logger from './logger.js';
 import { Client, Events, GatewayIntentBits, Collection, MessageFlags } from 'discord.js';
 import { AddPingRole } from './utils/db.js';
 
-const client = new Client({
+export const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
