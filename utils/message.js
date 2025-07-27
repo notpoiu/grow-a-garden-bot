@@ -160,7 +160,7 @@ export const CreateEventEmbed = (EventType, Name, Timeout, ChannelID) => {
             CreateEmbed({
                 title: `${EmojiMappings[EventType] == undefined ? "" : EmojiMappings[EventType] + " "}${EventType} Notifier`,
                 description: EventType == "Weather" ? `The weather is now set to **"${Data.emoji} ${Data.name}"**\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:R> (${Timeout} seconds)` : `The **"${Data.emoji}${Data.name}"** special event has started.\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:r> (${Timeout} seconds)`,
-                footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
+                footer: `This is the latest weather update as of <t:${Math.floor(Date.now() / 1000)}>`,
                 ActionRow: [
                     {
                         label: "Quick Join",
