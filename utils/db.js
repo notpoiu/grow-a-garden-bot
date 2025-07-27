@@ -60,6 +60,12 @@ const InternalEnsureTables = () => {
     `);
 }
 
+export const QueryDatabase = (query, params = []) => {
+    InternalEnsureTables();
+
+    return db.prepare(query).all(...params);
+}
+
 export const AddReactionRoleMessage = (message_id, channel_id, stock_type) => {
     InternalEnsureTables();
     const stmt = db.prepare("INSERT OR REPLACE INTO reaction_role_messages (message_id, channel_id, stock_type) VALUES (?, ?, ?)");

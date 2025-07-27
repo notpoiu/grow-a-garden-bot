@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grow A Garden Stock - Database Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        .hidden {
+            display: none;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 h-full flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700/50 p-4 flex justify-between items-center sticky top-0 z-20">
+        <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+            <h1 class="text-xl font-bold text-slate-50">Grow A Garden Stock - Database Viewer</h1>
+        </div>
+        <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 hidden">
+            Logout
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-6 lg:p-8">
+
+        <!-- API Key Prompt View -->
+        <div id="api-key-view">
+            <div class="max-w-md mx-auto mt-10 md:mt-20 bg-slate-800/50 rounded-2xl shadow-2xl shadow-cyan-500/10 border border-slate-700">
+                <div class="p-8">
+                    <div class="flex flex-col items-center text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400 mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <h2 class="text-2xl font-bold text-slate-100">Authentication Required</h2>
+                        <p class="text-slate-400 mt-2">Enter your API key to access the dashboard.</p>
+                    </div>
+
+                    <form id="api-key-form" class="mt-8 space-y-4">
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                            <input id="api-key-input" type="password" placeholder="Your API Key" class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all duration-300" aria-label="API Key">
+                        </div>
+                        <button id="api-key-submit" type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2 disabled:bg-slate-600 disabled:cursor-not-allowed">
+                            <span id="api-key-submit-text">Unlock Dashboard</span>
+                            <svg id="api-key-loader" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin hidden"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                        </button>
+                    </form>
+
+                    <div id="api-key-error" class="mt-6 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 flex items-center gap-3 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        <p id="api-key-error-text" class="text-sm"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Editor View -->
+        <div id="sql-editor-view" class="hidden h-full">
+            <div class="flex h-full gap-6">
+                <!-- Schema Sidebar -->
+                <aside class="w-64 bg-slate-800/50 rounded-xl shadow-lg border border-slate-700 flex flex-col">
+                    <div class="p-4 border-b border-slate-700">
+                        <h3 class="font-semibold text-lg flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                            <span>Tables</span>
+                        </h3>
+                    </div>
+                    <div class="flex-grow p-2 overflow-y-auto">
+                        <ul id="schema-table-list" class="space-y-1">
+                            <!-- Table names will be injected here -->
+                        </ul>
+                    </div>
+                </aside>
+
+                <!-- Main Content -->
+                <div class="flex-grow flex flex-col gap-6">
+                    <!-- Query Input Section -->
+                    <div class="bg-slate-800/50 rounded-xl shadow-lg border border-slate-700">
+                        <div class="p-4 border-b border-slate-700">
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                                <span>SQL Query</span>
+                            </h3>
+                        </div>
+                        <div class="p-4">
+                            <textarea id="sql-query-input" placeholder="-- Select a table from the left or enter a custom query" class="w-full h-48 bg-slate-950 text-slate-200 p-4 rounded-lg border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono text-sm resize-y"></textarea>
+                        </div>
+                        <div class="p-4 border-t border-slate-700 flex justify-end">
+                            <button id="sql-query-submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2 disabled:bg-slate-600 disabled:cursor-not-allowed">
+                                <span id="sql-query-submit-text">Run Query</span>
+                                <svg id="sql-query-loader" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin hidden"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results/Error Display Section -->
+                    <div class="flex-grow bg-slate-800/50 rounded-xl shadow-lg border border-slate-700 min-h-[300px]">
+                        <div class="p-4 border-b border-slate-700">
+                            <h3 id="result-title" class="font-semibold text-lg flex items-center gap-2">
+                                <svg id="result-icon-success" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                <svg id="result-icon-error" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400 hidden"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                <span>Result</span>
+                            </h3>
+                        </div>
+                        <div id="sql-result-container" class="p-4 overflow-auto">
+                            <!-- Results will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE ---
+            let apiKey = '';
+            let isAuthenticated = false;
+
+            // --- ELEMENT SELECTORS ---
+            const apiKeyView = document.getElementById('api-key-view');
+            const sqlEditorView = document.getElementById('sql-editor-view');
+            const logoutButton = document.getElementById('logout-button');
+
+            // API Key Form
+            const apiKeyForm = document.getElementById('api-key-form');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const apiKeySubmit = document.getElementById('api-key-submit');
+            const apiKeySubmitText = document.getElementById('api-key-submit-text');
+            const apiKeyLoader = document.getElementById('api-key-loader');
+            const apiKeyError = document.getElementById('api-key-error');
+            const apiKeyErrorText = document.getElementById('api-key-error-text');
+
+            // SQL Editor
+            const sqlQueryInput = document.getElementById('sql-query-input');
+            const sqlQuerySubmit = document.getElementById('sql-query-submit');
+            const sqlQuerySubmitText = document.getElementById('sql-query-submit-text');
+            const sqlQueryLoader = document.getElementById('sql-query-loader');
+            const sqlResultContainer = document.getElementById('sql-result-container');
+            const resultTitle = document.getElementById('result-title');
+            const resultIconSuccess = document.getElementById('result-icon-success');
+            const resultIconError = document.getElementById('result-icon-error');
+            const schemaTableList = document.getElementById('schema-table-list');
+
+            // --- UI UPDATE FUNCTIONS ---
+            const showApiKeyLoader = (loading) => {
+                apiKeySubmit.disabled = loading;
+                apiKeyLoader.classList.toggle('hidden', !loading);
+                apiKeySubmitText.textContent = loading ? 'Verifying...' : 'Unlock Dashboard';
+            };
+
+            const showApiKeyError = (message) => {
+                if (message) {
+                    apiKeyErrorText.textContent = message;
+                    apiKeyError.classList.remove('hidden');
+                } else {
+                    apiKeyError.classList.add('hidden');
+                }
+            };
+
+            const showSqlQueryLoader = (loading) => {
+                sqlQuerySubmit.disabled = loading;
+                sqlQueryLoader.classList.toggle('hidden', !loading);
+                sqlQuerySubmitText.textContent = loading ? 'Executing...' : 'Run Query';
+            };
+
+            const updateView = () => {
+                if (isAuthenticated) {
+                    apiKeyView.classList.add('hidden');
+                    sqlEditorView.classList.remove('hidden');
+                    logoutButton.classList.remove('hidden');
+                    loadSchema(); // Load schema when view is shown
+                } else {
+                    apiKeyView.classList.remove('hidden');
+                    sqlEditorView.classList.add('hidden');
+                    logoutButton.classList.add('hidden');
+                }
+            };
+
+            // --- LOGIC ---
+            const loadSchema = async () => {
+                try {
+                    const response = await fetch('/sql/schema', {
+                        headers: { 'Authorization': apiKey }
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || 'Failed to load schema');
+                    }
+                    
+                    const { data: tables } = await response.json();
+                    
+                    schemaTableList.innerHTML = ''; // Clear old list
+                    if (tables.length === 0) {
+                        schemaTableList.innerHTML = `<li class="text-slate-400 p-2">No tables found.</li>`;
+                        return;
+                    }
+
+                    tables.forEach(tableName => {
+                        const li = document.createElement('li');
+                        li.className = 'text-slate-300 font-mono text-sm p-2 rounded-md hover:bg-cyan-500/20 hover:text-cyan-300 cursor-pointer transition-colors';
+                        li.textContent = tableName;
+                        li.addEventListener('click', () => {
+                            sqlQueryInput.value = `SELECT * FROM \`${tableName}\` LIMIT 100;`;
+                            handleQuerySubmit();
+                        });
+                        schemaTableList.appendChild(li);
+                    });
+
+                } catch (err) {
+                    console.error('Schema loading failed:', err);
+                    schemaTableList.innerHTML = `<li class="text-red-400 p-2">Failed to load tables.</li>`;
+                }
+            };
+
+            const handleLogin = async (keyToValidate) => {
+                if (!keyToValidate) {
+                    showApiKeyError('Please provide an API key.');
+                    return;
+                }
+                showApiKeyLoader(true);
+                showApiKeyError('');
+
+                try {
+                    // NOTE: This is a mock request. Replace with your actual API endpoint.
+                    const response = await fetch('/test', {
+                        method: 'POST',
+                        headers: { 'Authorization': keyToValidate },
+                    });
+
+                    if (response.status === 404) { // Using 404 as a mock success for now
+                        localStorage.setItem('sql_dashboard_api_key', keyToValidate);
+                        apiKey = keyToValidate;
+                        isAuthenticated = true;
+                        updateView();
+                    } else if (response.status === 401) {
+                        showApiKeyError('Unauthorized: The API key is invalid or has expired.');
+                        localStorage.removeItem('sql_dashboard_api_key');
+                    } else {
+                        showApiKeyError(`An unexpected error occurred: ${response.status} ${response.statusText}`);
+                        localStorage.removeItem('sql_dashboard_api_key');
+                    }
+                } catch (err) {
+                    showApiKeyError('Network error. Could not connect to the server.');
+                    console.error('Login request failed:', err);
+                } finally {
+                    showApiKeyLoader(false);
+                }
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('sql_dashboard_api_key');
+                apiKey = '';
+                isAuthenticated = false;
+                apiKeyInput.value = '';
+                updateView();
+            };
+
+            const handleQuerySubmit = async () => {
+                const query = sqlQueryInput.value.trim();
+                if (!query) return;
+
+                showSqlQueryLoader(true);
+                sqlResultContainer.innerHTML = `
+                    <div class="flex justify-center items-center h-full text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    </div>`;
+                resultIconSuccess.classList.add('hidden');
+                resultIconError.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/sql/query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': apiKey,
+                        },
+                        body: JSON.stringify({ query: query }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || response.statusText);
+                    }
+                    
+                    renderResult(data.data);
+
+                } catch (err) {
+                    renderError(err.message || 'An unknown error occurred.');
+                    console.error('Query execution failed:', err);
+                } finally {
+                    showSqlQueryLoader(false);
+                }
+            };
+            
+            const renderResult = (result) => {
+                resultIconSuccess.classList.remove('hidden');
+                resultIconError.classList.add('hidden');
+
+                if (!Array.isArray(result) || result.length === 0) {
+                    sqlResultContainer.innerHTML = `
+                        <div class="text-slate-400 text-center py-10">
+                            <p>Query executed successfully, but returned no rows.</p>
+                        </div>`;
+                    return;
+                }
+
+                const headers = Object.keys(result[0]);
+                const table = document.createElement('table');
+                table.className = 'min-w-full text-sm text-left text-slate-300';
+                
+                const thead = document.createElement('thead');
+                thead.className = 'bg-slate-700/50 text-xs text-slate-300 uppercase tracking-wider';
+                const headerRow = document.createElement('tr');
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.scope = 'col';
+                    th.className = 'px-6 py-3';
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                const tbody = document.createElement('tbody');
+                tbody.className = 'bg-slate-800';
+                result.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-slate-700 hover:bg-slate-700/50 transition-colors';
+                    headers.forEach(header => {
+                        const td = document.createElement('td');
+                        td.className = 'px-6 py-4 font-mono';
+                        const value = row[header];
+                        if (value === null || value === undefined) {
+                            td.innerHTML = `<span class="text-slate-500">NULL</span>`;
+                        } else {
+                            td.textContent = String(value);
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                
+                sqlResultContainer.innerHTML = '';
+                sqlResultContainer.appendChild(table);
+            };
+            
+            const renderError = (message) => {
+                resultIconError.classList.remove('hidden');
+                resultIconSuccess.classList.add('hidden');
+                sqlResultContainer.innerHTML = `
+                    <div class="p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-300 font-mono text-sm">
+                        <p class="font-bold mb-2">Execution Error:</p>
+                        <p>${message}</p>
+                    </div>`;
+            };
+
+            // --- EVENT LISTENERS ---
+            apiKeyForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleLogin(apiKeyInput.value);
+            });
+
+            logoutButton.addEventListener('click', handleLogout);
+
+            sqlQuerySubmit.addEventListener('click', handleQuerySubmit);
+
+            // --- INITIALIZATION ---
+            const storedApiKey = localStorage.getItem('sql_dashboard_api_key');
+            if (storedApiKey) {
+                apiKeyInput.value = storedApiKey;
+                handleLogin(storedApiKey);
+            }
+        });
+    </script>
+</body>
+</html>

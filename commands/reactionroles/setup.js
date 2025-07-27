@@ -135,8 +135,16 @@ export default {
         });
 
         const GetStockName = (roleName) => {
-            const stockName = OptionArray.find(option => roleName.toLowerCase().includes(option.toLowerCase()));
-            return stockName ? stockName : null;
+            const lowerRoleName = roleName.toLowerCase();
+            return OptionArray.reduce((bestMatch, option) => {
+                const lowerOption = option.toLowerCase();
+                if (lowerRoleName.includes(lowerOption)) {
+                    if (!bestMatch || lowerOption.length > bestMatch.length) {
+                        return option;
+                    }
+                }
+                return bestMatch;
+            }, null);
         }
 
         for (const role of dbRoles.values()) {

@@ -1,6 +1,5 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, GetStockTypes } from '../../../utils/db.js';
-import { CreateStockEmbed } from '../../../utils/message.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
 import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
@@ -33,11 +32,40 @@ app.use(json, auth);
 
 // Routes
 app.get("/", (req, res) => {
-    res.send("Stock Communication Server is running!");
+    res.sendFile("index.html", { root: "data/communication/server/pages" });
 });
 
 app.get("/script", (req, res) => {
     res.sendFile("datahandler.luau", { root: "data/communication/scripts" });
+});
+
+// SQL Query Endpoint
+app.post("/sql/query", async (req, res) => {
+    const { query } = req.body;
+
+    if (!query) {
+        return res.status(400).send({ error: 'Missing query parameter' });
+    }
+
+    Logger.info(`Received SQL query: ${query}`);
+    try {
+        const result = QueryDatabase(query);
+        res.status(200).send({ data: result });
+    } catch (error) {
+        Logger.error(`SQL query error: ${error.message}`);
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
+})
+
+app.get("/sql/schema", async (req, res) => {
+    try {
+        const tables = await QueryDatabase("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
+        const tableNames = tables.map(t => t.name);
+        res.status(200).send({ data: tableNames });
+    } catch (error) {
+        Logger.error(`Schema query error: ${error.message}`);
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
 });
 
 // Update Stock Endpoint
