@@ -112,7 +112,7 @@ export default {
         // Send the initial response
         const ExistingMessage = GetReactionRoleMessageInChannel(tracking_channel.id, stock)
 
-        if (ExistingMessage) {
+        if (ExistingMessage && ExistingMessage.id && typeof ExistingMessage.id === "string") {
             RemoveReactionRoleMessage(ExistingMessage.id);
         }
 
