@@ -37,9 +37,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'data/communication/server/pages'));
 
 // Routes
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
     res.render("index", { 
-        DISCORD_URL: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}` 
+        DISCORD_URL: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}`
     });
 });
 
