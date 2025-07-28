@@ -19,7 +19,7 @@ export default {
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n${AllStockTypes.map(type => `Amount of channels tracking ${type}: ${GetSubscribedChannelCount(type)}`).join("\n")}\nBot created and maintained by [upio](https://www.upio.dev/).`,
+                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
                     ActionRow: [
                         {
                             label: "Website",
