@@ -8,7 +8,10 @@ import {
     MessageFlags
 } from 'discord.js';
 
-import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData, GetWeatherPingRoleForChannel } from "./db.js";
+import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData, GetWeatherPingRoleForChannel, GetShopVisibilityData } from "./db.js";
+import { ExpiringCache } from "./cache.js";
+
+const ShopVisibilityCache = new ExpiringCache(5 * 60 * 1000);
 
 export const EmojiMappings = {
     "Seed": "🌱",
@@ -76,7 +79,7 @@ export const CreateEmbed = (data) => {
 
 /**
  * 
- * Creates a stock embed message.
+ * Creates a stock embed message for a restock.
  * 
  * @param {string} Type 
  * @param {Object} Data 
@@ -84,11 +87,42 @@ export const CreateEmbed = (data) => {
  * @returns 
  */
 export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
+    const Display = GetShopVisibilityData(Type);
+
     let Description = "";
     if (!Data || Object.keys(Data).length === 0) {
         Description = "No stock data available.";
     } else {
-        Description = Object.entries(Data).map(([item_name, quantity], index) => {
+        ShopVisibilityCache.CleanExpired();
+
+        const cacheKey = `${Type}_${Object.keys(Data).sort().join('_')}`;
+        
+        let sortedEntries;
+        if (ShopVisibilityCache.Has(cacheKey)) {
+            const cachedOrder = ShopVisibilityCache.Get(cacheKey);
+            sortedEntries = Object.entries(Data).sort(([itemA], [itemB]) => {
+                const indexA = cachedOrder.indexOf(itemA);
+                const indexB = cachedOrder.indexOf(itemB);
+                return indexA - indexB;
+            });
+        } else {
+            sortedEntries = Object.entries(Data).sort(([itemA], [itemB]) => {
+                const indexA = Display ? Display.findIndex(item => item === itemA || item.name === itemA) : -1;
+                const indexB = Display ? Display.findIndex(item => item === itemB || item.name === itemB) : -1;
+                
+                if (indexA === -1 && indexB === -1) return 0;
+                if (indexA === -1) return -1;
+                if (indexB === -1) return 1;
+                
+                return indexA - indexB;
+            });
+            
+            // Cache the sorted order
+            const sortedOrder = sortedEntries.map(([itemName]) => itemName);
+            ShopVisibilityCache.Set(cacheKey, sortedOrder);
+        }
+
+        Description = sortedEntries.map(([item_name, quantity], index) => {
             const connector = index === Object.keys(Data).length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
             const emoji = GetEmojiForStock(item_name) || EmojiMappings[item_name] || "";
 
@@ -140,7 +174,7 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
 
 /**
  * 
- * Creates a stock embed message.
+ * Creates a stock embed message for weather or events.
  * 
  * @param {string} Type 
  * @param {Object} Data 
@@ -188,7 +222,47 @@ export const CreateEventEmbed = (EventType, Name, Timeout, ChannelID) => {
     return MessageData;
 }
 
-/** * Creates an admin restock embed message.
+/**
+ * 
+ * Creates a current weather embed message.
+ *
+ * @param {Array<Object>} weatherData - The weather data to include in the embed.
+ * @returns {ContainerBuilder} The current weather embed message container.
+ */
+export const CreateCurrentWeatherEmbed = (weatherData) => {
+    const WeatherData = GetWeatherData();
+
+    return {
+        components: [
+            CreateEmbed({
+                title: `${EmojiMappings["Weather"]} Current Weather & Events`,
+                description: weatherData.length > 0 ? weatherData.map(
+                    w => {
+                        const data = WeatherData.find(weather => weather.name === w.name) || {
+                            emoji: "",
+                            name: w.name,
+                        };
+
+                        let Prefix = "";
+                        if (!data || !data.name || !data.emoji) {
+                            Prefix = `**${w.name}**`;
+                        } else {
+                            Prefix = `**${data.emoji} ${data.name}**`;
+                        }
+
+                        return `${Prefix} - Ends <t:${w.created_at + w.timeout}:R> (${(w.created_at + w.timeout) - Math.floor(Date.now() / 1000)} seconds)`;
+                    }
+                ).join("\n") : `No current weather or events.`,
+            })
+        ],
+        flags: MessageFlags.IsComponentsV2
+    }
+}
+
+/**
+ * 
+ * Creates an admin restock embed message.
+ * 
  * @param {string} Type - The type of stock.
  * @param {string} Stock - The stock name.
  * @param {number} ChannelID - The channel ID to send the embed to.

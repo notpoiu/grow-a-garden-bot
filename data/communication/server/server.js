@@ -71,7 +71,7 @@ app.get("/sql/schema", async (req, res) => {
 
 // Update Stock Endpoint
 app.post("/stock/update/:type", async (req, res) => {
-    const { type } = req.params;
+    let { type } = req.params;
 
     if (!type) {
         return res.status(400).send({ error: 'Missing type parameter' });
@@ -86,10 +86,12 @@ app.post("/stock/update/:type", async (req, res) => {
         ExpendedType = data["shop"]
     } else if (type === "SpecialEvent") {
         ExpendedType = "Weather"
+        type = "Weather";
     }
 
     // Update Stock Data
-    if (ExpendedType === "Weather") {
+    if (type === "Weather") {
+        Logger.info(`Adding current weather or event: ${data.name} with timeout ${data.timeout}`);
         AddCurrentWeatherOrEvent(data.name, data.timeout);
     } else {
         SetCurrentStockData(ExpendedType, data);

@@ -67,7 +67,7 @@ const InternalEnsureTables = () => {
 }
 
 const InternalTrimAllNonValidWeatherEvents = () => {
-    db.exec("DELETE FROM current_weather_and_events WHERE created_at + timeout < strftime('%s', 'now')");
+    db.exec("DELETE FROM current_weather_and_events WHERE CAST(strftime('%s', 'now') AS INTEGER) > created_at + timeout");
 }
 
 export const QueryDatabase = (query, params = []) => {
