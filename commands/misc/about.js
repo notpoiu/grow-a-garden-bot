@@ -1,5 +1,9 @@
 import { ApplicationIntegrationType, InteractionContextType, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { CreateEmbed } from "../../utils/message.js";
+import { GetSubscribedChannelCount } from "../../utils/db.js";
+import { GetAllTrackers } from "../../utils/utils.js";
+
+const AllStockTypes = GetAllTrackers();
 
 export default {
     data: new SlashCommandBuilder()
@@ -15,8 +19,12 @@ export default {
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
+                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n${AllStockTypes.map(type => `Amount of channels tracking ${type}: ${GetSubscribedChannelCount(type)}`).join("\n")}\nBot created and maintained by [upio](https://www.upio.dev/).`,
                     ActionRow: [
+                        {
+                            label: "Website",
+                            link: "https://gag-watcher.upio.dev/"
+                        },
                         {
                             label: "Support Server",
                             link: "https://discord.gg/mspaint"

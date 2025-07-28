@@ -215,6 +215,13 @@ export const GetPingRoles = (stock_type) => {
     return roles.map(role => role.role_id);
 }
 
+export const GetSubscribedChannelCount = (type) => {
+    InternalEnsureTables();
+
+    const count = db.prepare("SELECT COUNT(*) as count FROM subscribed_channels WHERE type = ?").get(type);
+    return count ? count.count : 0;
+}
+
 export const AddSubscribedChannel = (channel_id, type) => {
     InternalEnsureTables();
 
