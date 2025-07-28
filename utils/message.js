@@ -8,7 +8,7 @@ import {
     MessageFlags
 } from 'discord.js';
 
-import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData } from "./db.js";
+import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData, GetWeatherPingRoleForChannel } from "./db.js";
 
 export const EmojiMappings = {
     "Seed": "🌱",
@@ -172,22 +172,14 @@ export const CreateEventEmbed = (EventType, Name, Timeout, ChannelID) => {
 
 
     if (ChannelID) {
-        const ping_roles = GetPingRolesForChannel(ChannelID, EventType);
-
-        let PingText = "";
-        for (const role of ping_roles) {
-            if (Data[role.name] === undefined) {
-                continue;
-            }
-
-            PingText += `<@&${role.role_id}> `;
+        const ping_role = GetWeatherPingRoleForChannel(ChannelID, Name);
+        if (!ping_role) {
+            return MessageData;
         }
 
-        if (ping_roles.length !== 0 && PingText.length > 0) {
-            MessageData.components.unshift(
-                CreateText(`-# ${PingText}`)
-            )
-        }
+        MessageData.components.unshift(
+            CreateText(`-# <@&${ping_role}>`)
+        );
 
         MessageData["allowed_mentions"] = {
             parse: ["roles"]

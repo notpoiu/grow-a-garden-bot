@@ -200,6 +200,13 @@ export const GetPingRolesForChannel = (channel_id, stock_type) => {
     return roles;
 }
 
+export const GetWeatherPingRoleForChannel = (channel_id, weather_name) => {
+    InternalEnsureTables();
+
+    const role = db.prepare("SELECT * FROM roles WHERE channel_id = ? AND stock_type = ? AND name = ?").get(channel_id, "Weather", weather_name);
+    return role ? role.role_id : null;
+}
+
 export const GetPingRoles = (stock_type) => {
     InternalEnsureTables();
 
