@@ -101,7 +101,6 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
             CreateEmbed({
                 title: `${EmojiMappings[Type] == undefined ? "" : EmojiMappings[Type] + " "}${Prefix || ""}${Type} Stock`,
                 description: Description,
-                footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
                 ActionRow: [
                     {
                         label: "Quick Join",
@@ -160,7 +159,6 @@ export const CreateEventEmbed = (EventType, Name, Timeout, ChannelID) => {
             CreateEmbed({
                 title: `${EmojiMappings[EventType] == undefined ? "" : EmojiMappings[EventType] + " "}${EventType} Notifier`,
                 description: EventType == "Weather" ? `The weather is now set to **"${Data.emoji} ${Data.name}"**\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:R> (${Timeout} seconds)` : `The **"${Data.emoji}${Data.name}"** special event has started.\nEnding <t:${Math.floor(Date.now() / 1000) + Timeout}:r> (${Timeout} seconds)`,
-                footer: `This is the latest weather update as of <t:${Math.floor(Date.now() / 1000)}>`,
                 ActionRow: [
                     {
                         label: "Quick Join",
@@ -210,7 +208,6 @@ export const CreateAdminRestockEmbed = (Type, Stock, ChannelID) => {
             CreateEmbed({
                 title: `${EmojiMappings["Admin Restock"]} Admin Restock`,
                 description: `**${GetEmojiForStock(Stock)}${Stock}** has been restocked!`,
-                footer: `This is stock as of <t:${Math.floor(Date.now() / 1000)}>`,
                 ActionRow: [
                     {
                         label: "Quick Join",
