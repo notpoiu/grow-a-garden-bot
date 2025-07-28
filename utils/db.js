@@ -52,6 +52,12 @@ const InternalEnsureTables = () => {
             emoji TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS current_weather_and_events (
+            name TEXT PRIMARY KEY NOT NULL,
+            timeout INTEGER NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
         CREATE TABLE IF NOT EXISTS current_stock_data (
             type TEXT PRIMARY KEY NOT NULL,
             data TEXT NOT NULL,
@@ -60,10 +66,28 @@ const InternalEnsureTables = () => {
     `);
 }
 
+export const InternalTrimAllNonValidWeatherEvents = () => {
+    db.exec("DELETE FROM current_weather_and_events WHERE created_at + timeout < strftime('%s', 'now')");
+}
+
 export const QueryDatabase = (query, params = []) => {
     InternalEnsureTables();
 
     return db.prepare(query).all(...params);
+}
+
+export const GetCurrentWeatherAndEvents = () => {
+    InternalEnsureTables();
+    InternalTrimAllNonValidWeatherEvents();
+
+    return db.prepare("SELECT * FROM current_weather_and_events").all();
+}
+
+export const AddCurrentWeatherOrEvent = (name, timeout) => {
+    InternalEnsureTables();
+
+    const stmt = db.prepare("INSERT INTO current_weather_and_events (name, timeout) VALUES (?, ?)");
+    stmt.run(name, timeout);
 }
 
 export const AddReactionRoleMessage = (message_id, channel_id, stock_type) => {
