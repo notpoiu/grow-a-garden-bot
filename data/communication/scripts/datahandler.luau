@@ -66,7 +66,7 @@ do
             end
 
             if not CustomResponse then
-                Result = module[Result]
+                Result = Data[Result]
             end
 
             IconData[Name] = Result
@@ -106,7 +106,7 @@ do
 
         return IconData, SortedVisibleData
     end
-
+    
     --// Seed Data Handler
     local SeedData, VisibleSeeds = GetDataFromModule(SeedDataSrc, function(Data)
         if not Data["FruitIcon"] then
