@@ -6,19 +6,20 @@ import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
 import { MassSendMessage, UploadEmoji } from '../../../utils/rest.js';
 import Logger from '../../../logger.js';
 
+import chalk from 'chalk';
+
 import express from 'express';
 import { json, auth } from './middleware.js';
 
 import { GoogleGenAI } from '@google/genai';
 
 import { exec } from "child_process";
-import os from 'os';
-import fs from 'fs';
 import { promisify } from "util";
 
-const execAsync = promisify(exec);
+import os from 'os';
+import fs from 'fs';
 
-import chalk from 'chalk';
+const execAsync = promisify(exec);
 
 // Initialization
 const app = express();
@@ -196,8 +197,7 @@ app.post('/data/update/:type', async (req, res) => {
     // Stock Update
     const AllStockData = GetStockData(type);
     const ExistingData = AllStockData.map(stock => stock.name);
-    console.log("ExistingData", ExistingData);
-    console.log("Data", data);
+
     const DataToInsert = Object.entries(data).filter(([key, rbxassetid]) => !ExistingData.includes(key));
     if (DataToInsert.length === 0) {
         Logger.info(`No new stock data to update for type ${type}`);
@@ -205,6 +205,8 @@ app.post('/data/update/:type', async (req, res) => {
     }
 
     Logger.info(`Inserting ${DataToInsert.length} new stock items for type ${type}`);
+
+    let completed = 0;
     for (let [name, rbxassetid] of DataToInsert) {
         if (rbxassetid.startsWith('rbxassetid://')) {
             rbxassetid = rbxassetid.replace('rbxassetid://', '');
@@ -215,23 +217,36 @@ app.post('/data/update/:type', async (req, res) => {
             .replace(/_+/g, '_')          // Replace multiple underscores with single underscore
             .replace(/^_|_$/g, '');       // Remove leading/trailing underscores
 
-        const ImageData = await GetAssetIdBinary(rbxassetid, "base64");
-        if (!ImageData) {
-            continue;
+        try {
+            const ImageData = await GetAssetIdBinary(rbxassetid, "base64");
+            if (!ImageData) {
+                completed++;
+                continue;
+            }
+    
+            const data = await UploadEmoji(
+                SanitizedName,
+                ImageData
+            );
+    
+            if (!data.id || !data.name) {
+                Logger.error(`Failed to upload emoji for ${name}: Invalid response from Discord`);
+                completed++;
+                continue;
+            }
+    
+            AddStockData(type, rbxassetid, name, `<:${data.name}:${data.id}>`);
+        } catch (error) {
+            completed++;
+            Logger.error(`Failed to upload emoji for ${name}: ${error.message}`);
         }
 
-        const data = await UploadEmoji(
-            SanitizedName,
-            ImageData
-        );
+        completed++;
+        await setTimeout(() => {}, 350);
 
-        if (!data.id || !data.name) {
-            return res.status(500).send({ error: 'Failed to upload emoji' });
+        if (completed % 10 === 0) {
+            Logger.info(`Processed ${completed} items for type ${type}`);
         }
-
-        AddStockData(type, rbxassetid, name, `<:${data.name}:${data.id}>`);
-
-        await setTimeout(() => {}, 250);
     }
 
     res.status(200).send({ message: 'Static Data updated successfully' });
