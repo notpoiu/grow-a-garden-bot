@@ -238,7 +238,7 @@ export const CreateCurrentWeatherEmbed = (weatherData) => {
                 title: `${EmojiMappings["Weather"]} Current Weather & Events`,
                 description: weatherData.length > 0 ? weatherData.map(
                     w => {
-                        const data = WeatherData.find(weather => weather.name === w.name) || {
+                        const data = WeatherData.find(weather => weather.original_name === w.name) || {
                             emoji: "",
                             name: w.name,
                         };
