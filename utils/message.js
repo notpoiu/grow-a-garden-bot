@@ -253,6 +253,12 @@ export const CreateCurrentWeatherEmbed = (weatherData) => {
                         return `${Prefix} - Ends <t:${w.created_at + w.timeout}:R> (${(w.created_at + w.timeout) - Math.floor(Date.now() / 1000)} seconds)`;
                     }
                 ).join("\n") : `No current weather or events.`,
+                ActionRow: [
+                    {
+                        label: "Quick Join",
+                        link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
+                    }
+                ]
             })
         ],
         flags: MessageFlags.IsComponentsV2
