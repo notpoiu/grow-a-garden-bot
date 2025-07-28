@@ -19,7 +19,7 @@ export const EmojiMappings = {
 }
 
 export const ConnectorEmojis = {
-    "End": process.env.DEV_MODE ? "<:connect:1399422765039358073>" : "<:end:1398493116272742420>",
+    "End": process.env.DEV_MODE ? "<:end:1399422777433260123>" : "<:end:1398493116272742420>",
     "Connect": process.env.DEV_MODE ? "<:connect:1399422765039358073>" : "<:connect:1398493096748253195>",
 }
 
