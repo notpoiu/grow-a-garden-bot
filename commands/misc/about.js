@@ -23,7 +23,7 @@ export default {
                         },
                         {
                             label: "Authorize Bot",
-                            link: "https://discord.com/oauth2/authorize?client_id=1398481293016174682"
+                            link: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}`
                         }
                     ]
                 })

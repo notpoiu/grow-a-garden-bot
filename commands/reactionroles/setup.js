@@ -116,13 +116,27 @@ export default {
             RemoveReactionRoleMessage(ExistingMessage.id);
         }
 
-        const message = await interaction.channel.send({
-            components: [
-                embedComponent,
-                ...actionRows
-            ],
-            flags: MessageFlags.IsComponentsV2
-        });
+        let message;
+        try {
+                message = await interaction.channel.send({
+                    components: [
+                    embedComponent,
+                    ...actionRows
+                ],
+                flags: MessageFlags.IsComponentsV2
+            });
+        } catch (error) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Reaction Roles Setup",
+                        description: "Failed to send the reaction roles message. Please check my permissions in this channel and try again.",
+                        footer: "I need permission to send messages and embed links in this channel.",
+                    })
+                ],
+                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
 
         AddReactionRoleMessage(message.id, tracking_channel.id, stock);
 

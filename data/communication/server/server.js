@@ -17,6 +17,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 
 import os from 'os';
+import path from 'path';
 import fs from 'fs';
 
 const execAsync = promisify(exec);
@@ -31,9 +32,19 @@ const ai = new GoogleGenAI({
 // Middleware
 app.use(json, auth);
 
+// Static Files
+app.set('view engine', 'ejs');
+app.set('views', path.join(process.cwd(), 'data/communication/server/pages'));
+
 // Routes
 app.get("/", (req, res) => {
-    res.sendFile("index.html", { root: "data/communication/server/pages" });
+    res.render("index", { 
+        DISCORD_URL: `https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}` 
+    });
+});
+
+app.get("/dashboard", (req, res) => {
+    res.render("dashboard");
 });
 
 app.get("/script", (req, res) => {

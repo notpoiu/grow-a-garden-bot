@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Garden Tracker - Track Everything In Your Garden</title>
+    <style>
+      /* --- Google Font Import --- */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+      /* --- CSS Variables (Color Palette) --- */
+      :root {
+        --bg-color: #111116;
+        --card-bg-color: #191921;
+        --border-color: #2a2a36;
+        --primary-purple: #8a63d2;
+        --primary-green: #3ba55d;
+        --text-light: #e0e0e0;
+        --text-medium: #a0a0b0;
+        --text-dark: #1f1f2e;
+        --purple-gradient: linear-gradient(135deg, #a881ff, #6f42c1);
+        --card-gradient: linear-gradient(135deg, #4f3d7a, #332750);
+      }
+
+      /* --- CSS Animations --- */
+      @keyframes move-dashes {
+        from {
+          background-position-x: 0;
+        }
+        to {
+          background-position-x: 32px;
+        }
+      }
+
+      /* --- Reset and Base Styles --- */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-light);
+        line-height: 1.6;
+      }
+
+      /* --- Utility Classes --- */
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      section {
+        padding: 80px 0;
+        text-align: center;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+        font-weight: 700;
+      }
+
+      h1 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        margin-bottom: 1rem;
+      }
+
+      h2 {
+        font-size: clamp(2rem, 4vw, 2.5rem);
+        margin-bottom: 1rem;
+      }
+
+      h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        font-size: 1.1rem;
+        color: var(--text-medium);
+      }
+
+      .section-subtitle {
+        max-width: 600px;
+        margin: 0 auto 40px auto;
+      }
+
+      .gradient-text {
+        background: var(--purple-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+      }
+
+      .btn-primary {
+        background-color: var(--primary-purple);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+      }
+      .btn-secondary:hover {
+        background-color: var(--card-bg-color);
+      }
+
+      .btn-green {
+        background-color: var(--primary-green);
+        color: #fff;
+        font-size: 1.1rem;
+        padding: 16px 32px;
+      }
+      .btn-green:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+      }
+
+      /* --- Header / Navbar --- */
+      .main-header {
+        padding: 20px 0;
+      }
+
+      .main-header .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--text-light);
+      }
+
+      .logo svg {
+        width: 32px;
+        height: 32px;
+      }
+
+      /* --- Hero Section --- */
+      .hero {
+        padding-top: 60px;
+      }
+
+      .hero-subtitle {
+        max-width: 550px;
+        margin: 0 auto 30px auto;
+        font-size: 1.2rem;
+      }
+
+      .hero-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .social-proof {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-medium);
+        font-weight: 500;
+      }
+
+      .social-proof .star {
+        color: #fdd835;
+      }
+
+      /* --- How It Works Section (UPDATED) --- */
+      .how-it-works-diagram {
+        background-color: #14141c;
+        border: 1px solid #2a2a36;
+        padding: 60px 40px;
+        border-radius: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Glow Effects */
+      .how-it-works-diagram::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(59, 165, 93, 0.25) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(138, 99, 210, 0.2) 0%,
+            transparent 40%
+          );
+        filter: blur(80px);
+      }
+
+      .diagram-node,
+      .diagram-connector,
+      .diagram-channels-container {
+        position: relative;
+        z-index: 1;
+      }
+
+      .diagram-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 24px;
+        border-radius: 16px;
+        min-width: 200px;
+        min-height: 120px;
+        text-align: center;
+      }
+
+      .diagram-node .node-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #fff;
+      }
+
+      .diagram-node .node-subtitle {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .diagram-game {
+        background: linear-gradient(145deg, #4ad176, #32a155);
+      }
+      .diagram-game .node-icon svg {
+        width: 28px;
+        height: 28px;
+        color: #f0e68c;
+      }
+
+      .diagram-bot {
+        background: linear-gradient(145deg, #9b72e8, #6f42c1);
+      }
+      .diagram-bot .node-icon {
+        font-size: 2rem; /* Robot Emoji size */
+      }
+
+      .diagram-channels-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .diagram-channel {
+        background-color: #21212b;
+        border: 1px solid #333340;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 500;
+        font-family: "Consolas", "Menlo", monospace;
+      }
+
+      .diagram-channel .hash {
+        color: var(--text-medium);
+        margin-right: 4px;
+      }
+
+      .diagram-connector {
+        flex-grow: 1;
+        height: 2px;
+        position: relative;
+        margin: 0 20px;
+      }
+
+      .diagram-connector .line {
+        width: 100%;
+        height: 100%;
+        background-image: repeating-linear-gradient(
+          to right,
+          #6d5b9b 0,
+          #6d5b9b 10px,
+          transparent 10px,
+          transparent 20px
+        );
+        background-size: 32px 2px;
+        animation: move-dashes 1.5s linear infinite;
+      }
+
+      .diagram-connector .dot {
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        background-color: #6d5b9b;
+        border-radius: 50%;
+      }
+
+      /* --- Features Grid Section --- */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        text-align: left;
+      }
+
+      .feature-card {
+        background-color: var(--card-bg-color);
+        padding: 32px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .feature-card .icon {
+        display: inline-block;
+        padding: 12px;
+        background: linear-gradient(
+          135deg,
+          rgba(138, 99, 210, 0.1),
+          rgba(138, 99, 210, 0.2)
+        );
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+
+      .feature-card .icon svg {
+        width: 28px;
+        height: 28px;
+        color: var(--primary-purple);
+      }
+
+      .feature-card.highlight {
+        background: var(--card-gradient);
+        border-color: var(--primary-purple);
+      }
+      .feature-card.highlight .icon {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .feature-card.highlight .icon svg {
+        color: #fff;
+      }
+
+      /* --- Complete Feature Set Section --- */
+      .feature-set-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        text-align: left;
+      }
+
+      .feature-list-card {
+        background-color: var(--card-bg-color);
+        padding: 32px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+      .feature-list-card.highlight {
+        background: var(--card-gradient);
+        border-color: var(--primary-purple);
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+      }
+
+      .feature-list li .check-icon {
+        color: var(--primary-green);
+      }
+      .feature-list-card.highlight li .check-icon {
+        color: #fff;
+      }
+      .feature-list li svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* --- Final CTA Section --- */
+      .cta-card {
+        background: var(--purple-gradient);
+        padding: 60px 40px;
+        border-radius: 20px;
+        margin-top: 40px;
+      }
+
+      .cta-card h2 {
+        color: #fff;
+      }
+      .cta-card p {
+        max-width: 500px;
+        margin: 0 auto 30px auto;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .cta-subtext {
+        margin-top: 16px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      /* --- Footer --- */
+      .main-footer {
+        padding: 40px 0;
+        text-align: center;
+        color: var(--text-medium);
+        border-top: 1px solid var(--border-color);
+      }
+
+      /* --- Responsive Adjustments --- */
+      @media (max-width: 960px) {
+        .how-it-works-diagram {
+          flex-direction: column;
+        }
+        .diagram-connector {
+          width: 2px;
+          height: 50px;
+          margin: 20px 0;
+        }
+        .diagram-connector .line {
+          background-image: repeating-linear-gradient(
+            to bottom,
+            #6d5b9b 0,
+            #6d5b9b 10px,
+            transparent 10px,
+            transparent 20px
+          );
+          background-size: 2px 32px;
+          animation-name: move-dashes-vertical;
+        }
+        @keyframes move-dashes-vertical {
+          from {
+            background-position-y: 0;
+          }
+          to {
+            background-position-y: 32px;
+          }
+        }
+        .diagram-connector .dot {
+          right: 50%;
+          bottom: -4px;
+          top: auto;
+          transform: translateX(50%);
+        }
+        .feature-set-container {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="container">
+        <a href="#" class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sprout-icon lucide-sprout"><path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/><path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/><path d="M5 21h14"/></svg>
+          Garden Tracker
+        </a>
+        <nav>
+          <a href="<%= DISCORD_URL %>" class="btn btn-primary">Add to Discord</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <h1>
+            <span class="gradient-text">Track Everything</span><br />In Your
+            Garden
+          </h1>
+          <p class="hero-subtitle">
+            Never miss a restock again! Our Discord bot monitors shop updates,
+            weather events, and more in real-time for Grow a Garden.
+          </p>
+          <div class="hero-buttons">
+            <a href="<%= DISCORD_URL %>" class="btn btn-primary">Add to Discord</a>
+            <a href="#features" class="btn btn-secondary">View Features</a>
+          </div>
+          <div class="social-proof">
+            <span>Live Tracking</span><span class="star">★</span
+            ><span>Trusted by 1000+ gardeners</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="how-it-works">
+        <div class="container">
+          <h2>How It Works</h2>
+          <p class="section-subtitle">
+            Seamless integration from game to Discord
+          </p>
+          <div class="how-it-works-diagram">
+            <div class="diagram-node diagram-game">
+              <div class="node-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-sprout-icon lucide-sprout"
+                >
+                  <path
+                    d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"
+                  />
+                  <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4" />
+                  <path d="M5 21h14" />
+                </svg>
+              </div>
+              <span class="node-title">Grow a Garden</span>
+              <span class="node-subtitle">Roblox Game</span>
+            </div>
+            <div class="diagram-connector">
+              <div class="line"></div>
+              <div class="dot"></div>
+            </div>
+            <div class="diagram-node diagram-bot">
+              <div class="node-icon">🤖</div>
+              <span class="node-title">Garden Tracker</span>
+              <span class="node-subtitle">Discord Bot</span>
+            </div>
+            <div class="diagram-connector">
+              <div class="line"></div>
+              <div class="dot"></div>
+            </div>
+            <div class="diagram-channels-container">
+              <div class="diagram-channel">
+                <span class="hash">#</span>track-channel-1
+              </div>
+              <div class="diagram-channel">
+                <span class="hash">#</span>track-channel-2
+              </div>
+              <div class="diagram-channel">
+                <span class="hash">#</span>track-channel-3
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features">
+        <div class="container">
+          <h2>Everything You Need to Track</h2>
+          <p class="section-subtitle">
+            From restocks to weather events, get instant notifications for
+            everything that matters in your garden.
+          </p>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-shopping-cart-icon lucide-shopping-cart"
+                >
+                  <circle cx="8" cy="21" r="1" />
+                  <circle cx="19" cy="21" r="1" />
+                  <path
+                    d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
+                  />
+                </svg>
+              </div>
+              <h3>Shop Restocks</h3>
+              <p>
+                Get instant notifications when fruits, seeds, gears, and eggs
+                are restocked in the shop.
+              </p>
+            </div>
+            <div class="feature-card highlight">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-cloud-icon lucide-cloud"
+                >
+                  <path
+                    d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"
+                  />
+                </svg>
+              </div>
+              <h3>Weather Events</h3>
+              <p>
+                Stay updated on weather changes and special events that affect
+                your garden growth.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-bell-icon lucide-bell"
+                >
+                  <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+                  <path
+                    d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+                  />
+                </svg>
+              </div>
+              <h3>Auto Reactions</h3>
+              <p>
+                Automatic role assignment and reaction setup for seamless
+                Discord integration.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-zap-icon lucide-zap"
+                >
+                  <path
+                    d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                  />
+                </svg>
+              </div>
+              <h3>Slash Commands</h3>
+              <p>
+                Use /track and /untrack commands to customize what notifications
+                you receive.
+              </p>
+            </div>
+            <div class="feature-card highlight">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-user-icon lucide-user"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <h3>User Integration</h3>
+              <p>
+                Check current weather and stock status directly through user
+                application integration.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-clock2-icon lucide-clock-2"
+                >
+                  <path d="M12 6v6l4-2" />
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              </div>
+              <h3>Real-time Updates</h3>
+              <p>
+                Lightning-fast updates ensure you never miss important changes
+                in your garden.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="complete-feature-set">
+        <div class="container">
+          <h2>Complete Feature Set</h2>
+          <div class="feature-set-container">
+            <div class="feature-list-card">
+              <h3>Tracking Features</h3>
+              <ul class="feature-list">
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Fruit restocks monitoring
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Gear availability alerts
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Seed shop updates
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Egg restock notifications
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Weather event tracking
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Special event alerts
+                </li>
+              </ul>
+            </div>
+            <div class="feature-list-card highlight">
+              <h3>Bot Commands</h3>
+              <ul class="feature-list">
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >/track - Subscribe to updates
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >/untrack - Unsubscribe from alerts
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Auto reaction roles setup
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Current weather integration
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Stock status checking
+                </li>
+                <li>
+                  <svg
+                    class="check-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"
+                    /></svg
+                  >Custom notification settings
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta">
+        <div class="container">
+          <div class="cta-card">
+            <h2>Ready to Grow Your Garden?</h2>
+            <p>
+              Join thousands of gardeners who never miss a restock or weather
+              event.
+            </p>
+            <a href="<%= DISCORD_URL %>" class="btn btn-green">
+              <svg viewBox="0 0 256 199" width="24" height="24" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid"><path d="M216.856 16.597A208.502 208.502 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046-19.692-2.961-39.203-2.961-58.533 0-1.832-4.4-4.55-9.933-6.846-14.046a207.809 207.809 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161.094 161.094 0 0 0 79.735 175.3a136.413 136.413 0 0 1-21.846-10.632 108.636 108.636 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a131.66 131.66 0 0 0 5.355 4.237 136.07 136.07 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848 21.142-6.58 42.646-16.637 64.815-33.213 5.316-56.288-9.08-105.09-38.056-148.36ZM85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2c12.867 0 23.236 11.804 23.015 26.2.02 14.375-10.148 26.18-23.015 26.18Zm85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2 0 14.375-10.148 26.18-23.015 26.18Z" fill="#FFFFFF"/></svg>
+              Add Garden Tracker to Discord
+            </a>
+            <p class="cta-subtext">
+              Free forever • No setup required • Instant notifications
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="main-footer">
+      <div class="container">
+        <p>Garden Tracker Bot • Built for the Grow a Garden community</p>
+      </div>
+    </footer>
+  </body>
+</html>
