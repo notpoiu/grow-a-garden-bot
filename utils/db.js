@@ -66,7 +66,7 @@ const InternalEnsureTables = () => {
     `);
 }
 
-export const InternalTrimAllNonValidWeatherEvents = () => {
+const InternalTrimAllNonValidWeatherEvents = () => {
     db.exec("DELETE FROM current_weather_and_events WHERE created_at + timeout < strftime('%s', 'now')");
 }
 
@@ -85,6 +85,7 @@ export const GetCurrentWeatherAndEvents = () => {
 
 export const AddCurrentWeatherOrEvent = (name, timeout) => {
     InternalEnsureTables();
+    InternalTrimAllNonValidWeatherEvents();
 
     const stmt = db.prepare("INSERT INTO current_weather_and_events (name, timeout) VALUES (?, ?)");
     stmt.run(name, timeout);

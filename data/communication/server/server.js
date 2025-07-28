@@ -1,5 +1,5 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase, AddCurrentWeatherOrEvent } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
 import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
@@ -83,10 +83,16 @@ app.post("/stock/update/:type", async (req, res) => {
     let ExpendedType = type;
     if (type === "Admin Restock") {
         ExpendedType = data["shop"]
+    } else if (type === "SpecialEvent") {
+        ExpendedType = "Weather"
     }
 
     // Update Stock Data
-    SetCurrentStockData(ExpendedType, data);
+    if (ExpendedType === "Weather") {
+        AddCurrentWeatherOrEvent(data.name, data.timeout);
+    } else {
+        SetCurrentStockData(ExpendedType, data);
+    }
 
     // Send Push Notification
     const SubscribedChannels = GetSubscribedChannels(type);
@@ -122,6 +128,8 @@ app.post('/data/update/:type', async (req, res) => {
     }
 
     const data = req.body;
+
+    Logger.info(`Received static data update for type ${type} at ${new Date().toISOString()}.`);
     
     // Weather Update (Edge Case)
     if (type == "Weather") {
@@ -188,12 +196,15 @@ app.post('/data/update/:type', async (req, res) => {
     // Stock Update
     const AllStockData = GetStockData(type);
     const ExistingData = AllStockData.map(stock => stock.name);
-    
+    console.log("ExistingData", ExistingData);
+    console.log("Data", data);
     const DataToInsert = Object.entries(data).filter(([key, rbxassetid]) => !ExistingData.includes(key));
     if (DataToInsert.length === 0) {
+        Logger.info(`No new stock data to update for type ${type}`);
         return res.status(200).send({ message: 'No new stock data to update' });
     }
 
+    Logger.info(`Inserting ${DataToInsert.length} new stock items for type ${type}`);
     for (let [name, rbxassetid] of DataToInsert) {
         if (rbxassetid.startsWith('rbxassetid://')) {
             rbxassetid = rbxassetid.replace('rbxassetid://', '');
