@@ -1,5 +1,4 @@
 import { ApplicationIntegrationType, InteractionContextType, MessageFlags, SlashCommandBuilder } from "discord.js";
-import { client } from "../../index.js";
 import { CreateEmbed } from "../../utils/message.js";
 
 export default {
@@ -10,13 +9,13 @@ export default {
         .setContexts(InteractionContextType.BotDM, InteractionContextType.PrivateChannel, InteractionContextType.Guild),
 
     async execute(interaction) {
-        const application = await client.application.fetch();
+        const application = await interaction.client.application.fetch();
 
         await interaction.reply({
             components: [
                 CreateEmbed({
                     title: "About this bot",
-                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${application.approximateGuildCount ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
+                    description: `A Discord bot that sends push notifications for grow a garden restocks\nUsed by over **${interaction.client.guilds.cache.size ?? "*Failed to get count*"} servers** and **${application.approximateUserInstallCount ?? "*Failed to get count*"} users**.\n\nBot created and maintained by [upio](https://www.upio.dev/).`,
                     ActionRow: [
                         {
                             label: "Support Server",
