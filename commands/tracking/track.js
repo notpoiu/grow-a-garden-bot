@@ -30,6 +30,19 @@ export default {
         const stock = interaction.options.getString("stock");
         const channel = interaction.options.getChannel("channel") || interaction.channel;
 
+        if (channel == null || channel == undefined) {
+            return await interaction.reply({
+                components: [
+                    CreateEmbed({
+                        title: "Tracking Setup",
+                        description: "You must specify a valid channel to track this stock.",
+                        footer: "Please select a valid channel and try again.",
+                    })
+                ],
+                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
+            });
+        }
+
         // Check for permissions to send messages in the channel
         if (!channel.permissionsFor(interaction.guild.members.me).has('SendMessages')) {
             return await interaction.reply({

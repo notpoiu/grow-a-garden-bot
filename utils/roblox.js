@@ -286,17 +286,12 @@ export const GetRobuxAmountForSuperSeeds = (targetSuperSeedCount, seed) => {
     let superSeedsFound = 0;
     let rewardIndex = 0;
 
-    // 3. Loop, generating rewards until we've found enough Super Seeds.
     while (superSeedsFound < targetSuperSeedCount) {
         rewardIndex++;
 
-        // Determine if the current reward index corresponds to a paid slot.
         const isPaidSlot = rewardIndex > 1 && (rewardIndex - 2) % 5 === 0;
 
         if (isPaidSlot) {
-            // This is a paid slot. It always costs Robux, regardless of the reward.
-            
-            // a. Find the product ID for this index and add its cost to the total.
             let productID = 0;
             for (const [id, threshold] of ProductMaxThreshold) {
                 if (rewardIndex < threshold) {
