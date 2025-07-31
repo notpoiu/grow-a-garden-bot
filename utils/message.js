@@ -326,14 +326,14 @@ export const CreateAdminRestockEmbed = (Type, Stock, ChannelID) => {
  * @param {number} count - The number of super seeds.
  * @returns {ContainerBuilder} The super seeds embed message container.
  */
-export const CreateSuperSeedsEmbed = (count) => {
+export const CreateSuperSeedsEmbed = (count, date) => {
     const RobuxCost = Array.from({ length: count }, (_, i) => {
-        const { price, paidTimes } = GetRobuxAmountForSuperSeeds(i + 1);
+        const { price, paidTimes } = GetRobuxAmountForSuperSeeds(i + 1, date);
         return `Super Seed #${i + 1}: **${price.toLocaleString()}** ${EmojiMappings["Robux"]} (${paidTimes.toLocaleString()} reward${paidTimes === 1 ? "" : "s"} paid)`;
     })
 
     // compute tomorrow at 00:00 UTC:
-    const now = new Date();
+    const now = date || new Date();
     const tomorrowUtcMidnight = Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),
@@ -346,10 +346,12 @@ export const CreateSuperSeedsEmbed = (count) => {
         description: `${RobuxCost.join("\n")}`,
     })
 
-    SuperSeedEmbed
-        .addTextDisplayComponents(
-            CreateText(`-# The Forever Pack should reset <t:${Math.floor(tomorrowUtcMidnight / 1000)}:R>`)
-        );
+    if (!date) {
+        SuperSeedEmbed
+            .addTextDisplayComponents(
+                CreateText(`-# The Forever Pack should reset <t:${Math.floor(tomorrowUtcMidnight / 1000)}:R>`)
+            );
+    }
 
     return {
         components: [

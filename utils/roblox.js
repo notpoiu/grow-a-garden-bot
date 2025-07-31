@@ -254,8 +254,8 @@ const InternalGetSuperSeedRewards = (seed, maxrewardindex) => {
 const SuperPackDay_Date = new Date(Date.UTC(2025, 6, 31, 0, 0, 0));
 const SuperPackDay = 20300;
 
-export const CalculateSeedPackDay = () => {
-    const CurrentDate = new Date(Date.now());
+export const CalculateSeedPackDay = (UnixTimestamp) => {
+    const CurrentDate = new Date(UnixTimestamp || Date.now());
     
     // Get the difference in days from the Super Pack Day
     const TimeDiff = CurrentDate.getTime() - SuperPackDay_Date.getTime();
@@ -274,13 +274,13 @@ export const GetSuperSeedRewards = (maxrewardindex) => {
  * @param {number} targetSuperSeedCount - The desired number of "Super Seed" items to acquire.
  * @returns {number} The total estimated Robux cost.
  */
-export const GetRobuxAmountForSuperSeeds = (targetSuperSeedCount) => {
+export const GetRobuxAmountForSuperSeeds = (targetSuperSeedCount, seed) => {
     if (targetSuperSeedCount <= 0) {
         return 0;
     }
 
     // RNG stuff
-    const rng = new Random(CalculateSeedPackDay());
+    const rng = new Random(CalculateSeedPackDay(seed));
     let totalRobux = 0;
     let paidTimes = 0;
     let superSeedsFound = 0;
