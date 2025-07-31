@@ -9,6 +9,7 @@ import {
 } from 'discord.js';
 
 import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData, GetWeatherPingRoleForChannel, GetShopVisibilityData } from "./db.js";
+import { GetRobuxAmountForSuperSeeds, CalculateSeedPackDay } from './roblox.js';
 import { ExpiringCache } from "./cache.js";
 
 const ShopVisibilityCache = new ExpiringCache(5 * 60 * 1000);
@@ -19,6 +20,10 @@ export const EmojiMappings = {
     "Egg": "🥚",
     "Gear": "🔨",
     "Admin Restock": "👑",
+
+    // Discord Emojis
+    "Super Seeds": process.env.DEV_MODE ? "<:SuperSeed:1400308630951170148>" : "<:SuperSeed:1400308536201969754>",
+    "Robux": process.env.DEV_MODE ? "<:Robux:1400309384684240976>" : "<:Robux:1400309498538889259>",
 }
 
 export const ConnectorEmojis = {
@@ -312,4 +317,39 @@ export const CreateAdminRestockEmbed = (Type, Stock, ChannelID) => {
         }
     }
     return MessageData;
+}
+
+/**
+ * 
+ * Creates a super seeds embed message.
+ *
+ * @param {number} count - The number of super seeds.
+ * @returns {ContainerBuilder} The super seeds embed message container.
+ */
+export const CreateSuperSeedsEmbed = (count) => {
+    const RobuxCost = Array.from({ length: count }, (_, i) => {
+        const { price, paidTimes } = GetRobuxAmountForSuperSeeds(i + 1);
+        return `> Super Seed ${i + 1}: **${price.toLocaleString()}** ${EmojiMappings["Robux"]} (${paidTimes.toLocaleString()} reward(s) paid)`;
+    })
+
+    const { price: totalPrice } = GetRobuxAmountForSuperSeeds(count);
+
+    // compute tomorrow at 00:00 UTC:
+    const now = new Date();
+    const tomorrowUtcMidnight = Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+        0, 0, 0
+    );
+
+    return {
+        components: [
+            CreateEmbed({
+                title: `${EmojiMappings["Super Seeds"]} Super Seeds ${now.getUTCMonth() + 1}/${now.getUTCDate()}`,
+                description: `To acquire **${count} Super Seeds**, you will need **${totalPrice.toLocaleString()} ${EmojiMappings["Robux"]}** in total.\n${RobuxCost.join("\n")}\n-# The Forever Pack should reset <t:${Math.floor(tomorrowUtcMidnight / 1000)}:R>`,
+            })
+        ],
+        flags: MessageFlags.IsComponentsV2
+    }
 }
