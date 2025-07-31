@@ -329,10 +329,8 @@ export const CreateAdminRestockEmbed = (Type, Stock, ChannelID) => {
 export const CreateSuperSeedsEmbed = (count) => {
     const RobuxCost = Array.from({ length: count }, (_, i) => {
         const { price, paidTimes } = GetRobuxAmountForSuperSeeds(i + 1);
-        return `> Super Seed ${i + 1}: **${price.toLocaleString()}** ${EmojiMappings["Robux"]} (${paidTimes.toLocaleString()} reward(s) paid)`;
+        return `Super Seed #${i + 1}: **${price.toLocaleString()}** ${EmojiMappings["Robux"]} (${paidTimes.toLocaleString()} reward${paidTimes === 1 ? "" : "s"} paid)`;
     })
-
-    const { price: totalPrice } = GetRobuxAmountForSuperSeeds(count);
 
     // compute tomorrow at 00:00 UTC:
     const now = new Date();
@@ -343,12 +341,19 @@ export const CreateSuperSeedsEmbed = (count) => {
         0, 0, 0
     );
 
+    const SuperSeedEmbed = CreateEmbed({
+        title: `${EmojiMappings["Super Seeds"]} Super Seeds ${now.getUTCMonth() + 1}/${now.getUTCDate()}`,
+        description: `${RobuxCost.join("\n")}`,
+    })
+
+    SuperSeedEmbed
+        .addTextDisplayComponents(
+            CreateText(`-# The Forever Pack should reset <t:${Math.floor(tomorrowUtcMidnight / 1000)}:R>`)
+        );
+
     return {
         components: [
-            CreateEmbed({
-                title: `${EmojiMappings["Super Seeds"]} Super Seeds ${now.getUTCMonth() + 1}/${now.getUTCDate()}`,
-                description: `To acquire **${count} Super Seeds**, you will need **${totalPrice.toLocaleString()} ${EmojiMappings["Robux"]}** in total.\n${RobuxCost.join("\n")}\n-# The Forever Pack should reset <t:${Math.floor(tomorrowUtcMidnight / 1000)}:R>`,
-            })
+            SuperSeedEmbed
         ],
         flags: MessageFlags.IsComponentsV2
     }
