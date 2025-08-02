@@ -306,13 +306,11 @@ export const GetRobuxAmountForSuperSeeds = (targetSuperSeedCount, seed) => {
                 totalRobux += ForeverPackPrices[productID];
             }
 
-            // b. Now, determine which reward is received from the paid pool.
             const reward = RandomFromArray(SuperSeedRewards.Paid, rng);
             if (reward && reward.Name === "Super Seed") {
                 superSeedsFound++;
             }
         } else {
-            // This is a free slot. It costs no Robux.
             // We still need to advance the random number generator to keep the sequence correct.
             RandomFromArray(SuperSeedRewards.Free, rng);
         }

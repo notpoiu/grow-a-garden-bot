@@ -331,7 +331,7 @@ ReplicatedStorage.GameEvents.SpecialEventStarted.OnClientEvent:Connect(function(
 end)
 
 --// Admin Restock
-ReplicatedStorage.GameEvents.Notification.OnClientEvent:Connect(function(message, something, timeout)
+ReplicatedStorage.GameEvents.Notification.OnClientEvent:Connect(function(message)
     message = tostring(message)
 
     if message:match("was restocked in the") then

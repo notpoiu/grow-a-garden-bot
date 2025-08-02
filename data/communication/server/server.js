@@ -1,10 +1,12 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase, AddCurrentWeatherOrEvent } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase, AddCurrentWeatherOrEvent, GetCurrentStockData } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
 import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
 import { MassSendMessage, UploadEmoji } from '../../../utils/rest.js';
 import Logger from '../../../logger.js';
+
+import { PeriodicQueue } from '../../../utils/periodicqueue.js';
 
 import chalk from 'chalk';
 
@@ -19,6 +21,8 @@ import { promisify } from "util";
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
+
+const AdminRestockQueue = new PeriodicQueue(2500, 5); // Process every 2.5 seconds, max 5 items per batch
 
 const execAsync = promisify(exec);
 
@@ -104,7 +108,17 @@ app.post("/stock/update/:type", async (req, res) => {
     if (type === "Weather") {
         Logger.info(`Adding current weather or event: ${data.name} with timeout ${data.timeout}`);
         AddCurrentWeatherOrEvent(data.name, data.timeout);
+    } else if (type === "Admin Restock") {
+        AdminRestockQueue.add({
+            shop: data.shop,
+            item: data.stock,
+        })
     } else {
+        while (AdminRestockQueue.isProcessing) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        AdminRestockQueue.clear();
         SetCurrentStockData(ExpendedType, data);
     }
 
@@ -304,8 +318,30 @@ const getLocalIP = async () => {
     }
 };
 
-
 export const InitServer = async () => {
+    AdminRestockQueue.setProcessor(async (items) => {
+        for (const item of items) {
+            const { shop, item: stock } = item.data;
+            Logger.info(`Processing admin restock to database for shop ${shop} with item ${stock}`);
+            
+            let Data = GetCurrentStockData(shop);
+            if (!Data) {
+                Logger.error(`No stock data found for shop ${shop}`);
+                continue;
+            }
+
+            if (!Data[stock]) {
+                Data[stock] = 1
+            } else {
+                Data[stock] += 1;
+            }
+
+            SetCurrentStockData(shop, Data);
+        }
+    });
+
+    AdminRestockQueue.startPeriodicProcessing();
+
     let port = process.env.PORT || 8080;
     const localIP = await getLocalIP();
     let successfullyStarted = false;
