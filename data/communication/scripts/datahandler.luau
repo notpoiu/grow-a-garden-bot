@@ -1,6 +1,7 @@
 --// Config
 local BaseURL = base_url
 local APIKey = api_key
+local OnlySendStaticData = only_send_static_data or false
 
 local EventShopPresent = true
 
@@ -175,6 +176,11 @@ LocalPlayer.Idled:Connect(function()
 end)
 
 --// Listening
+if OnlySendStaticData then
+    print("[DataHandler] Sent static data! Skipping further updates.")
+    return
+end
+
 --// Stock
 DataStream.OnClientEvent:Connect(function(type, id, data)
     if type ~= "UpdateData" or id ~= `{LocalPlayer.Name}_DataServiceProfile` then
