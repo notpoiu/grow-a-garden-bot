@@ -76,9 +76,10 @@ export default {
             }
 
             const msg = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true);
-            msg.components[0].addTextDisplayComponents(
-                CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
-            )
+            if (msg.components && msg.components[0])
+                msg.components[0].addTextDisplayComponents(
+                    CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+                )
 
             await interaction.reply(msg);
             return;
@@ -109,9 +110,10 @@ export default {
 
             if (list.length > 0) {
                 const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true)
-                embed.components[0].addTextDisplayComponents(
-                    CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
-                )
+                if (embed.components && embed.components[0])
+                    embed.components[0].addTextDisplayComponents(
+                        CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+                    )
 
                 msgs.push(embed);
             }
