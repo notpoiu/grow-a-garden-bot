@@ -63,6 +63,10 @@ app.get("/script", (req, res) => {
     res.sendFile("datahandler.luau", { root: "data/communication/scripts" });
 });
 
+app.get("/script.luau", (req, res) => {
+    res.sendFile("datahandler.luau", { root: "data/communication/scripts" });
+});
+
 // SQL Query Endpoint
 app.post("/sql/query", async (req, res) => {
     const { query } = req.body;
