@@ -97,6 +97,17 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     }
 
+    // Autocomplete Handling
+    if (interaction.isAutocomplete()) {
+        const command = interaction.client.commands.get(interaction.commandName);
+        if (!command || typeof command.autocomplete !== 'function') return;
+        try {
+            await command.autocomplete(interaction);
+        } catch (error) {
+            console.error(`Autocomplete error for ${interaction.commandName}:`, error);
+        }
+    }
+
     // String Select Menu Handling
     if (interaction.isStringSelectMenu()) {
         const id = interaction.customId;

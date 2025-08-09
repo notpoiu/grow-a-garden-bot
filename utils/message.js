@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 
 import { GetPingRolesForChannel, GetEmojiForStock, GetWeatherData, GetWeatherPingRoleForChannel, GetShopVisibilityData } from "./db.js";
-import { GetRobuxAmountForSuperSeeds, CalculateSeedPackDay } from './roblox.js';
+import { GetRobuxAmountForSuperSeeds } from './predictors/infpack.js';
 import { ExpiringCache } from "./cache.js";
 
 const ShopVisibilityCache = new ExpiringCache(5 * 60 * 1000);

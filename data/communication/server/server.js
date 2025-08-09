@@ -1,5 +1,5 @@
 // Imports
-import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase, AddCurrentWeatherOrEvent, GetCurrentStockData } from '../../../utils/db.js';
+import { GetStockData, AddStockData, GetWeatherData, AddWeatherData, SetCurrentStockData, GetSubscribedChannels, SetShopVisibilityData, QueryDatabase, AddCurrentWeatherOrEvent, GetCurrentStockData, SetStockRNGData, SetStockDataDump } from '../../../utils/db.js';
 import { ResponseSchema } from '../../../ai/weather/schema.js';
 import { GetAssetIdBinary } from '../../../utils/roblox.js';
 import { GetDesignatedMsgGenerationFunction } from '../../../utils/utils.js';
@@ -83,6 +83,33 @@ app.get("/sql/schema", async (req, res) => {
         res.status(500).send({ error: 'Internal Server Error' });
     }
 });
+
+// Predictor Stock Endpoints
+app.post("/predictor/seed/:type", async (req, res) => {
+    let { type } = req.params;
+    const { seed } = req.body;
+
+    if (!seed) {
+        return res.status(400).send({ error: 'Missing seed parameter' });
+    }
+
+    SetStockRNGData(type, seed);
+    res.status(200).send({ message: 'Seed data updated successfully' });
+    Logger.success(`RNG Seed for prediction of type ${type} updated!`);
+})
+
+app.post("/predictor/data_dump/:type", async (req, res) => {
+    let { type } = req.params;
+    const { data } = req.body;
+
+    if (!data) {
+        return res.status(400).send({ error: 'Missing data parameter' });
+    }
+
+    SetStockDataDump(type, data);
+    res.status(200).send({ message: 'Data dump updated successfully' });
+    Logger.success(`Data dump for ${type} updated successfully!`);
+})
 
 // Update Stock Endpoint
 app.post("/stock/update/:type", async (req, res) => {

@@ -41,6 +41,16 @@ const InternalEnsureTables = () => {
             emoji TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS stock_rng_data (
+            type TEXT PRIMARY KEY NOT NULL,
+            seed TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS stock_data_dump (
+            type TEXT PRIMARY KEY NOT NULL,
+            data TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS shop_data (
             type TEXT PRIMARY KEY NOT NULL,
             visible_items TEXT NOT NULL
@@ -74,6 +84,30 @@ export const QueryDatabase = (query, params = []) => {
     InternalEnsureTables();
 
     return db.prepare(query).all(...params);
+}
+
+export const SetStockRNGData = (type, seed) => {
+    InternalEnsureTables();
+    const stmt = db.prepare("INSERT OR REPLACE INTO stock_rng_data (type, seed) VALUES (?, ?)");
+    stmt.run(type, seed);
+}
+
+export const GetStockSeedData = (type) => {
+    InternalEnsureTables();
+    const data = db.prepare("SELECT seed FROM stock_rng_data WHERE type = ? ORDER BY rowid DESC LIMIT 1").get(type);
+    return data ? data.seed : null;
+}
+
+export const SetStockDataDump = (type, data) => {
+    InternalEnsureTables();
+    const stmt = db.prepare("INSERT OR REPLACE INTO stock_data_dump (type, data) VALUES (?, ?)");
+    stmt.run(type, JSON.stringify(data));
+}
+
+export const GetStockDataDump = (type) => {
+    InternalEnsureTables();
+    const data = db.prepare("SELECT data FROM stock_data_dump WHERE type = ? ORDER BY rowid DESC LIMIT 1").get(type);
+    return data ? JSON.parse(data.data) : null;
 }
 
 export const GetCurrentWeatherAndEvents = () => {
