@@ -143,12 +143,28 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix, DisableJoinButto
                 ShopVisibilityCache.Set(cacheKey, sortedOrder);
             }
 
-            Description = sortedEntries.map(([item_name, quantity], index) => {
-                const connector = index === sortedEntries.length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
+            // Build description with safety limit to avoid Discord payload size errors
+            const MAX_DESCRIPTION_CHARS = 3500;
+            let lines = [];
+            let used = 0;
+            for (let i = 0; i < sortedEntries.length; i++) {
+                const [item_name, quantity] = sortedEntries[i];
+                const connector = i === sortedEntries.length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
                 const emoji = GetEmojiForStock(item_name) || EmojiMappings[item_name] || "";
+                const line = `${connector}**${emoji} ${item_name}** (x${quantity})`;
 
-                return `${connector}**${emoji} ${item_name}** (x${quantity})`;
-            }).join("\n");
+                // +1 for newline when joined later
+                if (used + line.length + (lines.length > 0 ? 1 : 0) > MAX_DESCRIPTION_CHARS) {
+                    const remaining = sortedEntries.length - i;
+                    if (remaining > 0) {
+                        lines.push(`${ConnectorEmojis.End}... and ${remaining} more item(s)`);
+                    }
+                    break;
+                }
+                lines.push(line);
+                used += line.length + (lines.length > 1 ? 1 : 0);
+            }
+            Description = lines.join("\n");
         }
     }
 

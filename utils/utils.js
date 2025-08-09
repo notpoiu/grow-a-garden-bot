@@ -7,6 +7,13 @@ const EmojiSplitter = new GraphemeSplitter();
 export const GetAllTrackers = (add_admin = true) => {
     let StockChoices = GetStockTypes()
     
+    // Ensure core stock types are always present even if static data hasn't synced yet
+    for (const baseType of ["Seed", "Gear", "Egg"]) {
+        if (!StockChoices.some(choice => choice === baseType)) {
+            StockChoices.push(baseType);
+        }
+    }
+    
     if (!StockChoices.some(choice => choice === "Weather")) {
         StockChoices.push("Weather");
     }
@@ -25,11 +32,7 @@ export const GetAllTimerTrackers = () => {
 }
 
 export const GetDesignatedMsgGenerationFunction = (type) => {
-    const Stocks = GetStockTypes();
-    if (Stocks.includes(type)) {
-        return (stock, data, channel_id, prefix = "") => CreateStockEmbed(stock, data, channel_id, prefix);
-    }
-
+    // Special handlers first
     if (type === "Weather") {
         return (_, data, channel_id) => CreateEventEmbed("Weather", data["name"], data["timeout"], channel_id);
     }
@@ -38,7 +41,9 @@ export const GetDesignatedMsgGenerationFunction = (type) => {
         return (_, data, channel_id) => CreateAdminRestockEmbed(data["shop"], data["stock"], channel_id);
     }
 
-    return null;
+    // Default to stock embed for any other type (e.g., Seed, Gear, Egg),
+    // even if static data hasn't populated yet
+    return (stock, data, channel_id, prefix = "") => CreateStockEmbed(stock, data, channel_id, prefix);
 }
 
 export const GetSortedStockData = (type) => {

@@ -21,15 +21,47 @@ export const MassSendMessage = async (Data) => {
     if (Object.keys(Data).length === 0) return;
 
     const Promises = Object.entries(Data).map(([channel_id, embed_data]) => {
-        const SendMessageWorker = MessageWorker.execute(() => {
-            return fetch(`https://discord.com/api/channels/${channel_id}/messages`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bot ${process.env.BOT_TOKEN}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(embed_data)
-            });
+        const SendMessageWorker = MessageWorker.execute(async () => {
+            try {
+                let attempt = 0;
+                const maxAttempts = 4;
+                let lastErr;
+                while (attempt < maxAttempts) {
+                    attempt++;
+                    const response = await fetch(`https://discord.com/api/channels/${channel_id}/messages`, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bot ${process.env.BOT_TOKEN}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(embed_data)
+                    });
+
+                    if (response.ok) return response;
+
+                    // Read body for diagnostics
+                    let bodyText = "";
+                    try { bodyText = await response.text(); } catch {}
+
+                    // Handle rate limit or retryable errors
+                    if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
+                        // Honor Discord retry-after if present
+                        const retryAfterHeader = response.headers.get('retry-after');
+                        const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : Math.min(2000 * attempt, 8000);
+                        Logger.warn(`Retrying send to ${channel_id} after ${retryAfterMs}ms (attempt ${attempt}/${maxAttempts}) due to ${response.status}. Body: ${(bodyText||"").slice(0,200)}`);
+                        await new Promise(r => setTimeout(r, retryAfterMs));
+                        continue;
+                    }
+
+                    // Non-retryable
+                    Logger.error(`Failed to send message to channel ${channel_id}: ${response.status} ${response.statusText} | Body: ${(bodyText||"").slice(0,400)}`);
+                    return response;
+                }
+                throw lastErr || new Error('Exceeded max send attempts');
+            } catch (err) {
+                Logger.error(`Error sending message to channel ${channel_id}: ${err?.message || String(err)}`);
+                throw err;
+            }
         });
 
         return SendMessageWorker;
