@@ -11,6 +11,7 @@ const db = new DatabaseSync(join(__dirname, "../data/database.db"), {});
     subscribed_channels: stores channels that have subscribed to stock updates (type specifies the kind of updates).
     roles: roles associated with ping stock updates in channels.
 */
+
 const InternalEnsureTables = () => {
     db.exec(`
         CREATE TABLE IF NOT EXISTS subscribed_channels (
@@ -43,7 +44,8 @@ const InternalEnsureTables = () => {
 
         CREATE TABLE IF NOT EXISTS stock_rng_data (
             type TEXT PRIMARY KEY NOT NULL,
-            seed TEXT NOT NULL
+            seed TEXT NOT NULL,
+            timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         );
 
         CREATE TABLE IF NOT EXISTS stock_data_dump (
@@ -88,14 +90,14 @@ export const QueryDatabase = (query, params = []) => {
 
 export const SetStockRNGData = (type, seed) => {
     InternalEnsureTables();
-    const stmt = db.prepare("INSERT OR REPLACE INTO stock_rng_data (type, seed) VALUES (?, ?)");
+    const stmt = db.prepare("INSERT OR REPLACE INTO stock_rng_data (type, seed, timestamp) VALUES (?, ?, CAST(strftime('%s','now') AS INTEGER))");
     stmt.run(type, seed);
 }
 
 export const GetStockSeedData = (type) => {
     InternalEnsureTables();
-    const data = db.prepare("SELECT seed FROM stock_rng_data WHERE type = ? ORDER BY rowid DESC LIMIT 1").get(type);
-    return data ? data.seed : null;
+    const data = db.prepare("SELECT seed, timestamp FROM stock_rng_data WHERE type = ? ORDER BY rowid DESC LIMIT 1").get(type);
+    return data || null;
 }
 
 export const SetStockDataDump = (type, data) => {

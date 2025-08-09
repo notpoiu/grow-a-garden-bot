@@ -34,6 +34,7 @@ export default {
                 .addChoices(
                     { name: "Seed", value: "Seed" },
                     { name: "Gear", value: "Gear" },
+                    { name: "Egg", value: "Egg"}
                 )
                 .setRequired(true)
         )

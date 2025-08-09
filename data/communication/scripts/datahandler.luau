@@ -49,6 +49,7 @@ local DataServiceSrc = require(DataServiceModule)
 
 local SeedRNGSeed = DataServiceSrc:GetData().SeedStock.Seed
 local GearRNGSeed = DataServiceSrc:GetData().GearStock.Gear
+local EggRNGSeed = DataServiceSrc:GetData().PetEggStock.Egg
 
 --// Functions
 local function RemoveRichText(str)
@@ -179,6 +180,7 @@ do
 	for Type, Seed in pairs({
 		["Seed"] = SeedRNGSeed,
 		["Gear"] = GearRNGSeed,
+		["Egg"] = EggRNGSeed,
 	}) do
 		task.spawn(request, {
 			Url = `{BaseURL}/predictor/seed/{Type}`,
@@ -239,9 +241,30 @@ do
 		end
 	end)
 
+	local FilteredEggsArray = {}
+	for name, data in pairs(PetEggsDataSrc) do
+		table.insert(FilteredEggsArray, data)
+	end
+
+	table.sort(FilteredEggsArray, function(a, b)
+		local ap = a.Price or 0
+		local bp = b.Price or 0
+
+		if ap == bp then
+			local alo = a.LayoutOrder or 0
+			local blo = b.LayoutOrder or 0
+			if alo ~= blo then
+				return alo < blo
+			end
+		end
+
+		return ap < bp
+	end)
+
 	for Type, Data in pairs({
 		["Seed"] = FilteredSeedArray,
 		["Gear"] = FilteredGearArray,
+		["Egg"] = FilteredEggsArray
 	}) do
 		task.spawn(request, {
 			Url = `{BaseURL}/predictor/data_dump/{Type}`,
@@ -314,6 +337,20 @@ DataStream.OnClientEvent:Connect(function(type, id, data)
 
 				task.spawn(request, {
 					Url = `{BaseURL}/predictor/seed/Gear`,
+					Method = "POST",
+					Headers = {
+						["Content-Type"] = "application/json",
+						["Authorization"] = APIKey,
+					},
+					Body = HttpService:JSONEncode({ seed = GearRNGSeed }),
+				})
+			end
+		elseif Path == "ROOT/PetEggStock/Egg" then
+			if RawStockData ~= EggRNGSeed then
+				EggRNGSeed = RawStockData
+
+				task.spawn(request, {
+					Url = `{BaseURL}/predictor/seed/Egg`,
 					Method = "POST",
 					Headers = {
 						["Content-Type"] = "application/json",

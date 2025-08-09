@@ -1,14 +1,25 @@
 import { GetStockSeedData, GetStockDataDump, GetStockTypes } from "../db.js"
 import { Random } from "../roblox.js"
 
-// Ensure iteration order matches in-game Luau logic to keep RNG consumption identical
-const normalizeDataOrder = (type, data) => {
+const SortDataToGameOrder = (type, data) => {
     if (!Array.isArray(data)) return [];
 
     // Clone to avoid mutating external state
     let arr = data.slice();
 
-    if (type === "Seed") {
+    if (type === "Gear") {
+        // Special-case: "Medium Treat" should come before "Medium Toy" like Luau
+        arr.sort((a, b) => {
+            const an = String(a.name || "");
+            const bn = String(b.name || "");
+            if (an === "Medium Toy" && bn === "Medium Treat") return 1;
+            if (an === "Medium Treat" && bn === "Medium Toy") return -1;
+
+            const pa = Number(a.Price ?? 0);
+            const pb = Number(b.Price ?? 0);
+            return pa - pb;
+        });
+    } else {
         // Filter out entries with zero chance like Luau filteredSeedData
         arr = arr.filter((it) => Number(it.StockChance) !== 0);
 
@@ -23,28 +34,14 @@ const normalizeDataOrder = (type, data) => {
             }
             return pa - pb;
         });
-    } else if (type === "Gear") {
-        // Special-case: "Medium Treat" should come before "Medium Toy" like Luau
-        arr.sort((a, b) => {
-            const an = String(a.name || "");
-            const bn = String(b.name || "");
-            if (an === "Medium Toy" && bn === "Medium Treat") return 1;
-            if (an === "Medium Treat" && bn === "Medium Toy") return -1;
-
-            const pa = Number(a.Price ?? 0);
-            const pb = Number(b.Price ?? 0);
-            return pa - pb;
-        });
     }
 
     return arr;
 }
 
-// Robustly extract [min,max] from StockAmount regardless of data dump indexing
-const getMinMaxFromStockAmount = (stockAmount) => {
+const GetMinMaxFromStockAmount = (stockAmount) => {
     if (stockAmount == null) return [1, 1];
 
-    // Array case: expect [min,max] at [0],[1]
     if (Array.isArray(stockAmount)) {
         if (stockAmount.length >= 2) {
             const min = Number(stockAmount[0]);
@@ -93,13 +90,31 @@ const PredictQuantity = (seed, name, data) => {
 
     for (const item of data) {
         const roll = rng.NextInteger(1, item.StockChance);
-        const [minAmt, maxAmt] = getMinMaxFromStockAmount(item.StockAmount);
+
+        const [minAmt, maxAmt] = GetMinMaxFromStockAmount(item.StockAmount);
         const stock = rng.NextInteger(minAmt, maxAmt);
 
         if (item.name == name && roll == 1) {
             return stock;
         }
     }
+}
+
+const PredictEggQuantity = (seed, name, data) => {
+    const rng = new Random(seed);
+    let Quantity = 0;
+
+    for (let i = 0; i < 3; i++) {
+        for (const item of data) {
+            const roll = rng.NextInteger(1, item.StockChance);
+    
+            if (item.EggName == name && roll == 1) {
+                Quantity += 1;
+            }
+        }
+    }
+
+    return Quantity == 0 ? null : Quantity
 }
 
 // Normalize arbitrary seed input (string/number/bigint) to a safe 32-bit integer for deterministic seeding
@@ -117,68 +132,129 @@ const normalizeSeedTo32Bit = (seed) => {
     }
 }
 
+const RNGInfo = {
+    Seed: {
+        refSeedStr: 5848996,
+        refUnixStr: 1754698800,
+        restock_cycle_duration: 5 * 60
+    },
 
-const refSeedStr = 5848996;
-const refUnixStr = 1754698800;
+    Gear: {
+        refSeedStr: 5848996,
+        refUnixStr: 1754698800,
+        restock_cycle_duration: 5 * 60
+    },
 
-let dynamicSeedOffset = null; // integer constant so that: currentSeed = floor(now/300) + dynamicSeedOffset
-const getCalibratedBaseSeed = (type) => {
+    Egg: {
+        refSeedStr: 974876,
+        refUnixStr: 1754777400,
+        restock_cycle_duration: 60 * 60
+    }
+}
+
+// Cache dynamic offsets per type to avoid recomputing each call
+const dynamicSeedOffsetByType = Object.create(null);
+
+const GetRestockCycleSeconds = (type) => {
+    const info = RNGInfo[type];
+    const duration = info?.restock_cycle_duration;
+    return Number.isFinite(Number(duration)) && Number(duration) > 0 ? Number(duration) : 300;
+}
+
+const GetBaseSeed = (type) => {
+    const period = GetRestockCycleSeconds(type);
     const nowSec = Math.floor(Date.now() / 1000);
-    const ticks = Math.floor(nowSec / 300); // number of 5-min intervals since epoch
+    const ticksNow = Math.floor(nowSec / period);
 
-    if (dynamicSeedOffset === null) {
-        if (refSeedStr && refUnixStr) {
+    // Resolve or compute dynamic offset
+    if (!(type in dynamicSeedOffsetByType)) {
+        let offset = null;
+
+        // 1) Reference constants
+        const info = RNGInfo[type] || {};
+        const refSeedStr = info.refSeedStr;
+        const refUnixStr = info.refUnixStr;
+        if (Number(refSeedStr) > 0 && Number(refUnixStr) > 0) {
+            const refTicks = Math.floor(Number(refUnixStr) / period);
             const refSeed = Number(refSeedStr);
-            const refTicks = Math.floor(Number(refUnixStr) / 300);
-            if (Number.isFinite(refSeed) && Number.isFinite(refTicks)) {
-                dynamicSeedOffset = refSeed - refTicks;
+            if (Number.isFinite(refTicks) && Number.isFinite(refSeed)) {
+                offset = refSeed - refTicks;
             }
         }
 
-        // Fallback: use one DB read to calibrate
-        if (dynamicSeedOffset === null) {
-            const dbSeed = GetStockSeedData(type) || GetStockSeedData(type === "Seed" ? "Gear" : "Seed");
-            if (dbSeed !== null && dbSeed !== undefined) {
-                const seedNum = Number(dbSeed);
-                if (Number.isFinite(seedNum)) {
-                    dynamicSeedOffset = seedNum - ticks;
+        // 2) Fallback: single DB read
+        if (offset === null) {
+            try {
+                const rec = GetStockSeedData(type);
+                if (rec && rec.seed != null) {
+                    const dbSeed = Number(rec.seed);
+                    const tsSec = Number(rec.timestamp);
+                    const ticksAt = Number.isFinite(tsSec) && tsSec > 0 ? Math.floor(tsSec / period) : ticksNow;
+                    if (Number.isFinite(dbSeed)) {
+                        offset = dbSeed - ticksAt;
+                    }
                 }
-            }
+            } catch {}
         }
 
-        // Last resort: zero offset
-        if (dynamicSeedOffset === null) dynamicSeedOffset = 0;
+        // 3) Last resort
+        if (offset === null) offset = 0;
+
+        dynamicSeedOffsetByType[type] = offset;
     }
 
-    const base = ticks + dynamicSeedOffset;
+    const base = ticksNow + dynamicSeedOffsetByType[type];
     return normalizeSeedTo32Bit(base);
 }
 
-// Compute the next 5-minute boundary from a given unix time (seconds)
-const getNextRestockUnix = (nowUnix = Math.floor(Date.now() / 1000)) => {
-    const base = Math.floor(nowUnix / 300) * 300;
-    return base + 300; // always the next future boundary
+const GetNextRestockUnix = (nowUnix = Math.floor(Date.now() / 1000), Duration = 300) => {
+    const base = Math.floor(nowUnix / Duration) * Duration;
+    return base + Duration; // always the next future boundary
 }
 
 // Returns all items predicted to be in stock after `restocks` future restocks for the given `type`.
 // Each entry: { item, stock, restocks }
 export const PredictStock = (type, restocks = 0) => {
-    const baseSeed = getCalibratedBaseSeed(type);
+    const baseSeed = GetBaseSeed(type);
 
     const raw = GetStockDataDump(type);
-    const data = normalizeDataOrder(type, raw);
+    const data = SortDataToGameOrder(type, raw);
     if (!data || !Array.isArray(data)) return null;
 
     const offset = Math.max(0, Math.floor(restocks));
     const rng = new Random(baseSeed + offset);
-    const results = [];
+    let results = [];
 
-    for (const item of data) {
-        const roll = rng.NextInteger(1, item.StockChance);
-        const [minAmt, maxAmt] = getMinMaxFromStockAmount(item.StockAmount);
-        const stock = rng.NextInteger(minAmt, maxAmt);
-        if (roll === 1) {
-            results.push({ item: item.name, stock, restocks: Math.max(0, Math.floor(restocks)) });
+    if (type == "Egg") {
+        const resultsMapping = {}
+        for (let i = 0; i < 3; i++) {
+            for (const item of data) {
+                const roll = rng.NextInteger(1, item.StockChance);
+                
+                if (roll === 1) {
+                    if (!resultsMapping[item.EggName])
+                        resultsMapping[item.EggName] = 0
+                    
+                    resultsMapping[item.EggName] += 1
+                }
+            }
+        }
+
+        results = Object.entries(resultsMapping).map(([name, count]) => {
+            return {
+                item: name,
+                stock: count,
+                restocks: Math.max(0, Math.floor(restocks))
+            };
+        });
+    } else {
+        for (const item of data) {
+            const roll = rng.NextInteger(1, item.StockChance);
+            const [minAmt, maxAmt] = GetMinMaxFromStockAmount(item.StockAmount);
+            const stock = rng.NextInteger(minAmt, maxAmt);
+            if (roll === 1) {
+                results.push({ item: item.name, stock, restocks: Math.max(0, Math.floor(restocks)) });
+            }
         }
     }
 
@@ -218,23 +294,28 @@ export const PredictStockOccurences = (...args) => {
         return [];
     }
 
-    const baseSeed = getCalibratedBaseSeed(type);
+    const baseSeed = GetBaseSeed(type);
 
     const raw = GetStockDataDump(type);
-    const data = normalizeDataOrder(type, raw);
+    const data = SortDataToGameOrder(type, raw);
     if (!data || !Array.isArray(data)) return [];
 
     const maxSearch = 2_000_000; // safety cap similar to Lua reference
     const results = [];
     let offset = 0;
+
+    const RestockCycleDuration = RNGInfo[type].restock_cycle_duration
+
     const now = Math.floor(Date.now() / 1000);
-    const secondsUntilNext = getNextRestockUnix(now) - now;
+    const secondsUntilNext = GetNextRestockUnix(now, RestockCycleDuration) - now;
+
+    const PredictQuantityFunc = type == "Egg" ? PredictEggQuantity : PredictQuantity
 
     while (results.length < occurrences && offset <= maxSearch) {
-        const qty = PredictQuantity(baseSeed + offset, itemName, data);
+        const qty = PredictQuantityFunc(baseSeed + offset, itemName, data);
         if (qty != null) {
             const extraIntervals = offset > 0 ? (offset - 1) : 0; // match Luau: next restock for offset 0 or 1
-            const future = now + secondsUntilNext + (extraIntervals * 300);
+            const future = now + secondsUntilNext + (extraIntervals * RestockCycleDuration);
             const unix = Math.floor((future / 60) + 0.5) * 60; // round to nearest minute like Luau
             results.push({ item: itemName, stock: qty, restocks: offset, unix });
         }

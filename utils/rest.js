@@ -56,21 +56,40 @@ export const MassSendMessage = async (Data) => {
 
                     // Handle rate limit or retryable errors
                     if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
-                        // Honor Discord retry-after if present: prefer JSON body then header
+                        const isRateLimited = response.status === 429;
+                        // Base backoff for 5xx; 429s should primarily honor server-provided delays
                         let retryAfterMs = Math.min(2000 * attempt, 8000);
-                        try {
-                            const parsed = JSON.parse(bodyText || '{}');
-                            if (typeof parsed.retry_after === 'number') {
-                                retryAfterMs = Math.max(retryAfterMs, parsed.retry_after * 1000);
-                                if (parsed.global) {
-                                    GlobalCooldownUntil = Date.now() + retryAfterMs;
-                                }
+
+                        let parsed = {};
+                        try { parsed = JSON.parse(bodyText || '{}'); } catch {}
+
+                        // Derive retry-after values from body and header
+                        const bodyRetryAfterMs = typeof parsed.retry_after === 'number' && Number.isFinite(parsed.retry_after)
+                            ? parsed.retry_after * 1000
+                            : undefined;
+                        const headerRaw = response.headers.get('retry-after');
+                        const headerRetryAfterMs = headerRaw != null && headerRaw !== '' && Number.isFinite(Number(headerRaw))
+                            ? Number(headerRaw) * 1000
+                            : undefined;
+
+                        if (isRateLimited) {
+                            // Trust JSON body first; only fall back to header when body is missing
+                            if (Number.isFinite(bodyRetryAfterMs)) {
+                                retryAfterMs = bodyRetryAfterMs;
+                            } else if (Number.isFinite(headerRetryAfterMs)) {
+                                retryAfterMs = headerRetryAfterMs;
                             }
-                        } catch {}
-                        const header = response.headers.get('retry-after');
-                        if (header && !Number.isNaN(Number(header))) {
-                            retryAfterMs = Math.max(retryAfterMs, Number(header) * 1000);
+                        } else {
+                            // For 5xx, optionally extend backoff with header if provided
+                            if (Number.isFinite(headerRetryAfterMs)) {
+                                retryAfterMs = Math.max(retryAfterMs, headerRetryAfterMs);
+                            }
                         }
+
+                        if (parsed.global) {
+                            GlobalCooldownUntil = Date.now() + retryAfterMs;
+                        }
+
                         Logger.warn(`Retrying send to ${channel_id} after ${retryAfterMs}ms (attempt ${attempt}/${maxAttempts}) due to ${response.status}. Body: ${(bodyText||"").slice(0,200)}`);
                         await new Promise(r => setTimeout(r, retryAfterMs));
                         continue;

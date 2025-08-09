@@ -19,6 +19,12 @@ export default {
                 .setAutocomplete(true)
                 .setRequired(false)
         )
+        .addStringOption(option =>
+            option.setName("egg")
+                .setDescription("Egg name")
+                .setAutocomplete(true)
+                .setRequired(false)
+        )
         .addIntegerOption(option =>
             option.setName("max")
                 .setDescription("Max occurrences to search (1-15)")
@@ -32,18 +38,26 @@ export default {
     async execute(interaction) {
         const seedName = interaction.options.getString("seed");
         const gearName = interaction.options.getString("gear");
+        const eggName = interaction.options.getString("egg");
         const max = interaction.options.getInteger("max") || 5;
 
-        const provided = [!!seedName, !!gearName].filter(Boolean).length;
+        const provided = [!!seedName, !!gearName, !!eggName].filter(Boolean).length;
         if (provided !== 1) {
             return await interaction.reply({
-                content: "Please provide exactly one of: seed or gear.",
+                content: "Please provide exactly one of: seed, gear or egg.",
                 flags: MessageFlags.Ephemeral
             });
         }
 
-        const type = seedName ? "Seed" : "Gear";
-        const itemName = seedName || gearName;
+        let type = null;
+        if (seedName)
+            type = "Seed"
+        else if (gearName)
+            type = "Gear"
+        else
+            type = "Egg"
+
+        const itemName = seedName || gearName || eggName;
         const occ = PredictStockOccurences(type, itemName, max);
 
         if (!occ || occ.length === 0) {
@@ -77,8 +91,20 @@ export default {
     async autocomplete(interaction) {
         const focused = interaction.options.getFocused(true);
         const query = (focused.value || "").toString().toLowerCase();
-        const isSeed = focused.name === "seed";
-        const type = isSeed ? "Seed" : "Gear";
+
+        let type = null;
+        switch (focused.name) {
+            case "seed":
+                type = "Seed"
+                break;
+            case "gear":
+                type = "Gear"
+                break;
+            case "egg":
+                type = "Egg"
+                break;
+        }
+
 
         let rows = [];
         try {
