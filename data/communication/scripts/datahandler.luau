@@ -15,6 +15,7 @@ local HttpService = cloneref(game:GetService("HttpService"))
 local Players = cloneref(game:GetService("Players"))
 local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
 local VirtualUser = cloneref(game:GetService("VirtualUser"))
+local StarterGui = cloneref(game:GetService("StarterGui"))
 
 --// Variables
 local LocalPlayer = Players.LocalPlayer
@@ -263,7 +264,11 @@ end)
 
 --// Listening
 if OnlySendStaticData then
-	print("[DataHandler] Sent static data! Skipping further updates.")
+	StarterGui:SetCore("SendNotification", {
+		Title = "GAG Tracker",
+		Text = "Sent Static Data successfully!",
+		Duration = 15,
+	})
 	return
 end
 
@@ -474,3 +479,9 @@ ReplicatedStorage.GameEvents.Notification.OnClientEvent:Connect(function(message
 		print(`[AdminRestock] Sent Restock for {itemName} in {shopName} to Server`)
 	end
 end)
+
+StarterGui:SetCore("SendNotification", {
+	Title = "GAG Tracker",
+	Text = "Loaded Successfully!",
+	Duration = 15,
+})
