@@ -53,7 +53,7 @@ export default {
 
     async execute(interaction) {
         const type = interaction.options.getString("type");
-        const restocks = interaction.options.getInteger("restocks") || 0;
+        const restocks = interaction.options.getInteger("restocks") || 1;
         const dateString = interaction.options.getString("date");
 
         const provided = [restocks !== null && restocks !== undefined, !!dateString].filter(Boolean).length;
