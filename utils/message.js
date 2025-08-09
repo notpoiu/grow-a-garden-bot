@@ -100,39 +100,56 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
     } else {
         ShopVisibilityCache.CleanExpired();
 
-        const cacheKey = `${Type}_${Object.keys(Data).sort().join('_')}`;
-        
-        let sortedEntries;
-        if (ShopVisibilityCache.Has(cacheKey)) {
-            const cachedOrder = ShopVisibilityCache.Get(cacheKey);
-            sortedEntries = Object.entries(Data).sort(([itemA], [itemB]) => {
-                const indexA = cachedOrder.indexOf(itemA);
-                const indexB = cachedOrder.indexOf(itemB);
-                return indexA - indexB;
-            });
+        // Visibility filter: keep only items present in shop visibility list
+        const isVisible = (name) => {
+            if (!Array.isArray(Display) || Display.length === 0) return true;
+            for (const item of Display) {
+                if (item === name) return true;
+                if (item && typeof item === 'object' && item.name === name) return true;
+            }
+            return false;
+        };
+
+        // Zero filter: hide entries with quantity <= 0 for display purposes
+        const filteredEntries = Object.entries(Data).filter(([name, qty]) => Number(qty) > 0 && isVisible(name));
+
+        if (filteredEntries.length === 0) {
+            Description = "No stock data available.";
         } else {
-            sortedEntries = Object.entries(Data).sort(([itemA], [itemB]) => {
-                const indexA = Display ? Display.findIndex(item => item === itemA || item.name === itemA) : -1;
-                const indexB = Display ? Display.findIndex(item => item === itemB || item.name === itemB) : -1;
-                
-                if (indexA === -1 && indexB === -1) return 0;
-                if (indexA === -1) return -1;
-                if (indexB === -1) return 1;
-                
-                return indexA - indexB;
-            });
+            const cacheKey = `${Type}_${filteredEntries.map(([n]) => n).sort().join('_')}`;
             
-            // Cache the sorted order
-            const sortedOrder = sortedEntries.map(([itemName]) => itemName);
-            ShopVisibilityCache.Set(cacheKey, sortedOrder);
+            let sortedEntries;
+            if (ShopVisibilityCache.Has(cacheKey)) {
+                const cachedOrder = ShopVisibilityCache.Get(cacheKey);
+                sortedEntries = filteredEntries.sort(([itemA], [itemB]) => {
+                    const indexA = cachedOrder.indexOf(itemA);
+                    const indexB = cachedOrder.indexOf(itemB);
+                    return indexA - indexB;
+                });
+            } else {
+                sortedEntries = filteredEntries.sort(([itemA], [itemB]) => {
+                    const indexA = Display ? Display.findIndex(item => item === itemA || item.name === itemA) : -1;
+                    const indexB = Display ? Display.findIndex(item => item === itemB || item.name === itemB) : -1;
+                    
+                    if (indexA === -1 && indexB === -1) return 0;
+                    if (indexA === -1) return -1;
+                    if (indexB === -1) return 1;
+                    
+                    return indexA - indexB;
+                });
+                
+                // Cache the sorted order
+                const sortedOrder = sortedEntries.map(([itemName]) => itemName);
+                ShopVisibilityCache.Set(cacheKey, sortedOrder);
+            }
+
+            Description = sortedEntries.map(([item_name, quantity], index) => {
+                const connector = index === sortedEntries.length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
+                const emoji = GetEmojiForStock(item_name) || EmojiMappings[item_name] || "";
+
+                return `${connector}**${emoji} ${item_name}** (x${quantity})`;
+            }).join("\n");
         }
-
-        Description = sortedEntries.map(([item_name, quantity], index) => {
-            const connector = index === Object.keys(Data).length - 1 ? ConnectorEmojis.End : ConnectorEmojis.Connect;
-            const emoji = GetEmojiForStock(item_name) || EmojiMappings[item_name] || "";
-
-            return `${connector}**${emoji} ${item_name}** (x${quantity})`;
-        }).join("\n")
     }
 
     const MessageData = {
