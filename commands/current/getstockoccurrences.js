@@ -1,5 +1,5 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateEmbed, ConnectorEmojis, EmojiMappings } from "../../utils/message.js";
+import { CreateEmbed, ConnectorEmojis, EmojiMappings, CreateText } from "../../utils/message.js";
 import { PredictStockOccurences } from "../../utils/predictors/stock.js";
 import { GetEmojiForStock, GetShopVisibilityData, GetStockData } from "../../utils/db.js";
 
@@ -60,9 +60,13 @@ export default {
         }).join("\n");
 
         const embed = CreateEmbed({
-            title: `Future Occurrences (${type})\n-# This using a prediction algorithm and may not be 100% accurate!`,
+            title: `Future Occurrences (${type})`,
             description: lines,
         });
+
+        embed.addTextDisplayComponents(
+            CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+        )
 
         return await interaction.reply({
             components: [embed],

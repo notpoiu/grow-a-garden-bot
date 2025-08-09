@@ -1,5 +1,5 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateStockEmbed, CreateEmbed, EmojiMappings } from "../../utils/message.js";
+import { CreateStockEmbed, CreateEmbed, EmojiMappings, CreateText } from "../../utils/message.js";
 import { PredictStock } from "../../utils/predictors/stock.js";
 
 const toUnix = (date) => Math.floor(date.getTime() / 1000);
@@ -103,7 +103,12 @@ export default {
             msgs.push({ components: [header], flags: MessageFlags.IsComponentsV2 });
 
             if (list.length > 0) {
-                msgs.push(CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", "\n-# This using a prediction algorithm and may not be 100% accurate!"));
+                const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ")
+                embed.addTextDisplayComponents(
+                    CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+                )
+
+                msgs.push(embed);
             }
 
             if (msgs.length === 1) {
@@ -119,10 +124,7 @@ export default {
             }
             return;
         }
-
-        // Item occurrences moved to /getstockoccurrences
     },
-    // No autocomplete for this command
 }
 
 
