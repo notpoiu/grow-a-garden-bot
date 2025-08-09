@@ -60,8 +60,8 @@ export default {
         }).join("\n");
 
         const embed = CreateEmbed({
-            title: `Future Occurrences (${type})`,
-            description: lines
+            title: `Future Occurrences (${type})\n-# This using a prediction algorithm and may not be 100% accurate!`,
+            description: lines,
         });
 
         return await interaction.reply({

@@ -91,7 +91,7 @@ export const CreateEmbed = (data) => {
  * @param {number | undefined} ChannelID 
  * @returns 
  */
-export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
+export const CreateStockEmbed = (Type, Data, ChannelID, Prefix, Suffix) => {
     const Display = GetShopVisibilityData(Type);
 
     let Description = "";
@@ -155,7 +155,7 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix) => {
     const MessageData = {
         components: [
             CreateEmbed({
-                title: `${EmojiMappings[Type] == undefined ? "" : EmojiMappings[Type] + " "}${Prefix || ""}${Type} Stock`,
+                title: `${EmojiMappings[Type] == undefined ? "" : EmojiMappings[Type] + " "}${Prefix || ""}${Type} Stock${Suffix ? Suffix : ""}`,
                 description: Description,
                 ActionRow: [
                     {
