@@ -2,6 +2,7 @@ import { ConcurrencyPool } from "./concurrencypool.js";
 import Ratelimits from "../ratelimits.js";
 import Logger from "../logger.js";
 import { REST, Routes } from 'discord.js';
+import { RemoveAllSubscriptionsForChannel } from "./db.js";
 
 import fs from 'fs';
 import path from 'path';
@@ -13,6 +14,15 @@ const __dirname = path.dirname(__filename);
 const DiscordREST = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 const MessageWorker = new ConcurrencyPool(Ratelimits.RequestsPerSecond, 1000);
 
+// Global 429 handling: pause all sends when Discord indicates a global rate limit
+let GlobalCooldownUntil = 0;
+const WaitIfGlobalCooldown = async () => {
+    const now = Date.now();
+    if (now >= GlobalCooldownUntil) return;
+    const delay = Math.max(0, GlobalCooldownUntil - now);
+    await new Promise(r => setTimeout(r, delay));
+}
+
 /** 
  *   MassSendMessage is a function that sends messages to multiple Discord channels.
  *   It takes a Data object where each key is a channel ID and the value is the message content to send.
@@ -23,6 +33,7 @@ export const MassSendMessage = async (Data) => {
     const Promises = Object.entries(Data).map(([channel_id, embed_data]) => {
         const SendMessageWorker = MessageWorker.execute(async () => {
             try {
+                await WaitIfGlobalCooldown();
                 let attempt = 0;
                 const maxAttempts = 4;
                 let lastErr;
@@ -45,12 +56,30 @@ export const MassSendMessage = async (Data) => {
 
                     // Handle rate limit or retryable errors
                     if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
-                        // Honor Discord retry-after if present
-                        const retryAfterHeader = response.headers.get('retry-after');
-                        const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : Math.min(2000 * attempt, 8000);
+                        // Honor Discord retry-after if present: prefer JSON body then header
+                        let retryAfterMs = Math.min(2000 * attempt, 8000);
+                        try {
+                            const parsed = JSON.parse(bodyText || '{}');
+                            if (typeof parsed.retry_after === 'number') {
+                                retryAfterMs = Math.max(retryAfterMs, parsed.retry_after * 1000);
+                                if (parsed.global) {
+                                    GlobalCooldownUntil = Date.now() + retryAfterMs;
+                                }
+                            }
+                        } catch {}
+                        const header = response.headers.get('retry-after');
+                        if (header && !Number.isNaN(Number(header))) {
+                            retryAfterMs = Math.max(retryAfterMs, Number(header) * 1000);
+                        }
                         Logger.warn(`Retrying send to ${channel_id} after ${retryAfterMs}ms (attempt ${attempt}/${maxAttempts}) due to ${response.status}. Body: ${(bodyText||"").slice(0,200)}`);
                         await new Promise(r => setTimeout(r, retryAfterMs));
                         continue;
+                    }
+
+                    // Auto-clean bad subscriptions on permanent errors
+                    if (response.status === 403 || response.status === 404) {
+                        Logger.error(`Cleaning subscriptions for channel ${channel_id} due to ${response.status}. Body: ${(bodyText||"").slice(0,200)}`);
+                        try { RemoveAllSubscriptionsForChannel(channel_id); } catch {}
                     }
 
                     // Non-retryable

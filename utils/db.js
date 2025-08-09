@@ -270,6 +270,13 @@ export const RemoveSubscribedChannel = (channel_id, type) => {
     stmt.run(channel_id, type);
 }
 
+export const RemoveAllSubscriptionsForChannel = (channel_id) => {
+    InternalEnsureTables();
+
+    const stmt = db.prepare("DELETE FROM subscribed_channels WHERE channel_id = ?");
+    stmt.run(channel_id);
+}
+
 export const IsChannelSubscribed = (channel_id, type) => {
     InternalEnsureTables();
 
