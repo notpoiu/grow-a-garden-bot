@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+      :root {
+        --bg-color: #111116;
+        --card-bg-color: #191921;
+        --border-color: #2a2a36;
+        --primary-purple: #8a63d2;
+        --text-light: #e0e0e0;
+        --text-medium: #a0a0b0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); color: var(--text-light); line-height: 1.6; }
+      .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+      header { padding: 24px 0; border-bottom: 1px solid var(--border-color); }
+      header .brand { display: flex; align-items: center; justify-content: space-between; }
+      header a { color: var(--text-light); text-decoration: none; font-weight: 600; }
+      h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin: 24px 0 12px; }
+      h2 { font-size: 1.4rem; margin: 28px 0 10px; }
+      p { color: var(--text-medium); margin: 8px 0; }
+      ul { margin: 8px 0 8px 20px; color: var(--text-medium); }
+      li { margin: 6px 0; }
+      .card { background: var(--card-bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin: 16px 0; }
+      footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border-color); color: var(--text-medium); font-size: 0.95rem; }
+      .pill { display: inline-block; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 999px; font-size: 0.85rem; color: var(--text-medium); }
+      .accent { color: var(--primary-purple); font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand">
+          <a href="/">← Back</a>
+          <span class="pill">Privacy Policy</span>
+        </div>
+      </header>
+
+      <main>
+        <h1>Privacy Policy</h1>
+        <p class="accent">Last updated: <%= new Date().toISOString().slice(0,10) %></p>
+
+        <div class="card">
+          <h2>Overview</h2>
+          <p>This bot stores the minimum data necessary to provide features like reaction roles and channel tracking. We do not store message content or user IDs for these features.</p>
+        </div>
+
+        <div class="card">
+          <h2>Data We Store</h2>
+          <ul>
+            <li><strong>Tracker Channel IDs</strong>: channel identifiers that subscribe to specific stock/weather update types.</li>
+            <li><strong>Reaction Role Messages</strong>: the message ID, channel ID, and stock type for reaction-role setup messages.</li>
+            <li><strong>Roles for Reaction Roles</strong>: the role ID, role name, channel ID, and the stock/weather type the role corresponds to.</li>
+          </ul>
+          <p>These items correspond to database tables that power subscriptions and reaction-role assignment.</p>
+        </div>
+
+        <div class="card">
+          <h2>What We Do Not Store</h2>
+          <ul>
+            <li>User message content for these features</li>
+            <li>Direct message content</li>
+            <li>Sensitive personal information</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Purpose of Processing</h2>
+          <p>The stored data is used solely to deliver bot functionality, including sending update notifications to subscribed channels and assigning reaction roles.</p>
+        </div>
+
+        <div class="card">
+          <h2>Retention</h2>
+          <p>Data is kept for as long as the configuration remains active. If you unsubscribe a channel, remove a reaction-role message, or remove the bot from your server, related records are removed or become inaccessible.</p>
+        </div>
+
+        <div class="card">
+          <h2>Data Sharing</h2>
+          <p>We do not sell or share this data with third parties. Data may be processed by the hosting provider and Discord APIs as part of normal bot operation.</p>
+        </div>
+
+        <div class="card">
+          <h2>Your Choices</h2>
+          <ul>
+            <li>Unsubscribe channels from updates using the provided commands.</li>
+            <li>Remove any reaction-role messages and associated roles.</li>
+            <li>Remove the bot from your server to stop all processing.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Contact</h2>
+          <p>For questions or requests related to this policy, contact the bot owner via the support server or the listed contact method in the bot documentation.</p>
+        </div>
+      </main>
+
+      <footer>
+        <p>
+          © <%= new Date().getFullYear() %> Garden Tracker • <a href="/privacy" style="color:inherit">Privacy</a> • <a href="/tos" style="color:inherit">Terms</a>
+        </p>
+      </footer>
+    </div>
+  </body>
+  </html>
+
+

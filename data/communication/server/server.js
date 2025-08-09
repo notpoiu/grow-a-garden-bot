@@ -47,6 +47,14 @@ app.get("/", async (req, res) => {
     });
 });
 
+app.get("/tos", (req, res) => {
+    res.render("tos");
+});
+
+app.get("/privacy", (req, res) => {
+    res.render("privacy");
+});
+
 app.get("/dashboard", (req, res) => {
     res.render("dashboard");
 });

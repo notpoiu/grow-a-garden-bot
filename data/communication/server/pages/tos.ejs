@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Service</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+      :root {
+        --bg-color: #111116;
+        --card-bg-color: #191921;
+        --border-color: #2a2a36;
+        --primary-purple: #8a63d2;
+        --text-light: #e0e0e0;
+        --text-medium: #a0a0b0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); color: var(--text-light); line-height: 1.6; }
+      .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+      header { padding: 24px 0; border-bottom: 1px solid var(--border-color); }
+      header .brand { display: flex; align-items: center; justify-content: space-between; }
+      header a { color: var(--text-light); text-decoration: none; font-weight: 600; }
+      h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin: 24px 0 12px; }
+      h2 { font-size: 1.4rem; margin: 28px 0 10px; }
+      p { color: var(--text-medium); margin: 8px 0; }
+      ul { margin: 8px 0 8px 20px; color: var(--text-medium); }
+      li { margin: 6px 0; }
+      .card { background: var(--card-bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin: 16px 0; }
+      footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border-color); color: var(--text-medium); font-size: 0.95rem; }
+      .pill { display: inline-block; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 999px; font-size: 0.85rem; color: var(--text-medium); }
+      .accent { color: var(--primary-purple); font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="brand">
+          <a href="/">← Back</a>
+          <span class="pill">Terms of Service</span>
+        </div>
+      </header>
+
+      <main>
+        <h1>Terms of Service</h1>
+        <p class="accent">Last updated: <%= new Date().toISOString().slice(0,10) %></p>
+
+        <div class="card">
+          <h2>Acceptance</h2>
+          <p>By inviting or using the bot, you agree to be bound by these Terms of Service.</p>
+        </div>
+
+        <div class="card">
+          <h2>Use of the Bot</h2>
+          <ul>
+            <li>You must comply with Discord's Terms of Service and Community Guidelines.</li>
+            <li>You will not misuse the bot to harass, spam, or otherwise disrupt servers.</li>
+            <li>The bot is provided "as is" without warranties of any kind.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Data</h2>
+          <p>The bot stores limited configuration data necessary for functionality, as described in the <a href="/privacy" style="color:inherit; text-decoration: underline;">Privacy Policy</a>.</p>
+        </div>
+
+        <div class="card">
+          <h2>Service Availability</h2>
+          <p>We may modify, suspend, or discontinue the bot or any part of it at any time <strong>without prior notice</strong>.</p>
+        </div>
+
+        <div class="card">
+          <h2>Limitation of Liability</h2>
+          <p>To the fullest extent permitted by law, we are not liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the bot.</p>
+        </div>
+
+        <div class="card">
+          <h2>Contact</h2>
+          <p>For questions about these Terms, contact the bot owner via the support server or listed contact method.</p>
+        </div>
+      </main>
+
+      <footer>
+        <p>
+          © <%= new Date().getFullYear() %> Garden Tracker • <a href="/privacy" style="color:inherit">Privacy</a> • <a href="/tos" style="color:inherit">Terms</a>
+        </p>
+      </footer>
+    </div>
+  </body>
+  </html>
+
+
