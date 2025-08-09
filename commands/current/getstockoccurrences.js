@@ -1,7 +1,7 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CreateEmbed, ConnectorEmojis, EmojiMappings } from "../../utils/message.js";
 import { PredictStockOccurences } from "../../utils/predictors/stock.js";
-import { GetEmojiForStock, GetStockData } from "../../utils/db.js";
+import { GetEmojiForStock, GetShopVisibilityData, GetStockData } from "../../utils/db.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -78,13 +78,13 @@ export default {
 
         let rows = [];
         try {
-            rows = GetStockData(type) || [];
+            rows = GetShopVisibilityData(type) || [];
         } catch (_) {}
 
         const suggestions = rows
-            .filter(r => !query || r.name.toLowerCase().includes(query))
+            .filter(r => !query || r.toLowerCase().includes(query))
             .slice(0, 25)
-            .map(r => ({ name: r.name, value: r.name }));
+            .map(r => ({ name: r, value: r }));
 
         await interaction.respond(suggestions);
     }
