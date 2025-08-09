@@ -75,7 +75,7 @@ export default {
             }
 
             const msg = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true);
-            msg.addTextDisplayComponents(
+            msg.components[0].addTextDisplayComponents(
                 CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
             )
 
@@ -108,7 +108,7 @@ export default {
 
             if (list.length > 0) {
                 const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true)
-                embed.addTextDisplayComponents(
+                embed.components[0].addTextDisplayComponents(
                     CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
                 )
 
