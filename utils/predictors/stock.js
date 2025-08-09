@@ -1,12 +1,100 @@
 import { GetStockSeedData, GetStockDataDump, GetStockTypes } from "../db.js"
 import { Random } from "../roblox.js"
 
+// Ensure iteration order matches in-game Luau logic to keep RNG consumption identical
+const normalizeDataOrder = (type, data) => {
+    if (!Array.isArray(data)) return [];
+
+    // Clone to avoid mutating external state
+    let arr = data.slice();
+
+    if (type === "Seed") {
+        // Filter out entries with zero chance like Luau filteredSeedData
+        arr = arr.filter((it) => Number(it.StockChance) !== 0);
+
+        // Sort by Price asc, then LayoutOrder asc (fallback to 0 if missing)
+        arr.sort((a, b) => {
+            const pa = Number(a.Price ?? 0);
+            const pb = Number(b.Price ?? 0);
+            if (pa === pb) {
+                const la = Number(a.LayoutOrder ?? 0);
+                const lb = Number(b.LayoutOrder ?? 0);
+                return la - lb;
+            }
+            return pa - pb;
+        });
+    } else if (type === "Gear") {
+        // Special-case: "Medium Treat" should come before "Medium Toy" like Luau
+        arr.sort((a, b) => {
+            const an = String(a.name || "");
+            const bn = String(b.name || "");
+            if (an === "Medium Toy" && bn === "Medium Treat") return 1;
+            if (an === "Medium Treat" && bn === "Medium Toy") return -1;
+
+            const pa = Number(a.Price ?? 0);
+            const pb = Number(b.Price ?? 0);
+            return pa - pb;
+        });
+    }
+
+    return arr;
+}
+
+// Robustly extract [min,max] from StockAmount regardless of data dump indexing
+const getMinMaxFromStockAmount = (stockAmount) => {
+    if (stockAmount == null) return [1, 1];
+
+    // Array case: expect [min,max] at [0],[1]
+    if (Array.isArray(stockAmount)) {
+        if (stockAmount.length >= 2) {
+            const min = Number(stockAmount[0]);
+            const max = Number(stockAmount[1]);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        } else if (stockAmount.length === 1) {
+            const val = Number(stockAmount[0]);
+            if (Number.isFinite(val)) return [val, val];
+        }
+    }
+
+    // Object-like cases: support 0/1, '0'/'1', 1/2, '1'/'2', or Min/Max keys
+    if (typeof stockAmount === "object") {
+        if (0 in stockAmount && 1 in stockAmount) {
+            const min = Number(stockAmount[0]);
+            const max = Number(stockAmount[1]);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        }
+        if ('0' in stockAmount && '1' in stockAmount) {
+            const min = Number(stockAmount['0']);
+            const max = Number(stockAmount['1']);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        }
+        if (1 in stockAmount && 2 in stockAmount) {
+            const min = Number(stockAmount[1]);
+            const max = Number(stockAmount[2]);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        }
+        if ('1' in stockAmount && '2' in stockAmount) {
+            const min = Number(stockAmount['1']);
+            const max = Number(stockAmount['2']);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        }
+        if ('Min' in stockAmount && 'Max' in stockAmount) {
+            const min = Number(stockAmount.Min);
+            const max = Number(stockAmount.Max);
+            if (Number.isFinite(min) && Number.isFinite(max)) return [min, max];
+        }
+    }
+
+    return [1, 1];
+}
+
 const PredictQuantity = (seed, name, data) => {
     const rng = new Random(seed);
 
     for (const item of data) {
         const roll = rng.NextInteger(1, item.StockChance);
-        const stock = rng.NextInteger(item.StockAmount[1], item.StockAmount[2]);
+        const [minAmt, maxAmt] = getMinMaxFromStockAmount(item.StockAmount);
+        const stock = rng.NextInteger(minAmt, maxAmt);
 
         if (item.name == name && roll == 1) {
             return stock;
@@ -77,7 +165,8 @@ const getNextRestockUnix = (nowUnix = Math.floor(Date.now() / 1000)) => {
 export const PredictStock = (type, restocks = 0) => {
     const baseSeed = getCalibratedBaseSeed(type);
 
-    const data = GetStockDataDump(type);
+    const raw = GetStockDataDump(type);
+    const data = normalizeDataOrder(type, raw);
     if (!data || !Array.isArray(data)) return null;
 
     const offset = Math.max(0, Math.floor(restocks));
@@ -86,7 +175,8 @@ export const PredictStock = (type, restocks = 0) => {
 
     for (const item of data) {
         const roll = rng.NextInteger(1, item.StockChance);
-        const stock = rng.NextInteger(item.StockAmount[1], item.StockAmount[2]);
+        const [minAmt, maxAmt] = getMinMaxFromStockAmount(item.StockAmount);
+        const stock = rng.NextInteger(minAmt, maxAmt);
         if (roll === 1) {
             results.push({ item: item.name, stock, restocks: Math.max(0, Math.floor(restocks)) });
         }
@@ -130,7 +220,8 @@ export const PredictStockOccurences = (...args) => {
 
     const baseSeed = getCalibratedBaseSeed(type);
 
-    const data = GetStockDataDump(type);
+    const raw = GetStockDataDump(type);
+    const data = normalizeDataOrder(type, raw);
     if (!data || !Array.isArray(data)) return [];
 
     const maxSearch = 2_000_000; // safety cap similar to Lua reference
