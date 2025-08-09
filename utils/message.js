@@ -91,7 +91,7 @@ export const CreateEmbed = (data) => {
  * @param {number | undefined} ChannelID 
  * @returns 
  */
-export const CreateStockEmbed = (Type, Data, ChannelID, Prefix, Suffix) => {
+export const CreateStockEmbed = (Type, Data, ChannelID, Prefix, DisableJoinButton) => {
     const Display = GetShopVisibilityData(Type);
 
     let Description = "";
@@ -152,18 +152,22 @@ export const CreateStockEmbed = (Type, Data, ChannelID, Prefix, Suffix) => {
         }
     }
 
+    const EmbedOptions = {
+        title: `${EmojiMappings[Type] == undefined ? "" : EmojiMappings[Type] + " "}${Prefix || ""}${Type} Stock`,
+        description: Description,
+    }
+
+    if (DisableJoinButton == undefined || DisableJoinButton == false || DisableJoinButton == null)
+        EmbedOptions["ActionRow"] = [
+            {
+                label: "Quick Join",
+                link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
+            }
+        ]
+
     const MessageData = {
         components: [
-            CreateEmbed({
-                title: `${EmojiMappings[Type] == undefined ? "" : EmojiMappings[Type] + " "}${Prefix || ""}${Type} Stock${Suffix ? Suffix : ""}`,
-                description: Description,
-                ActionRow: [
-                    {
-                        label: "Quick Join",
-                        link: "https://externalrobloxjoiner.vercel.app/join?placeId=126884695634066"
-                    }
-                ]
-            })
+            CreateEmbed(EmbedOptions)
         ],
         flags: MessageFlags.IsComponentsV2
     }

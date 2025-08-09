@@ -74,7 +74,11 @@ export default {
                 });
             }
 
-            const msg = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ","\n-# This using a prediction algorithm and may not be 100% accurate!");
+            const msg = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true);
+            msg.addTextDisplayComponents(
+                CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+            )
+
             await interaction.reply(msg);
             return;
         }
@@ -93,7 +97,7 @@ export default {
             const roundedUnix = Math.ceil(toUnix(target) / 300) * 300;
 
             const header = CreateEmbed({
-                title: `${EmojiMappings[type] || ""} Future ${type} Stock"\n-# This using a prediction algorithm and may not be 100% accurate!`,
+                title: `${EmojiMappings[type] || ""} Future ${type} Stock"`,
                 description: `Predictions for <t:${roundedUnix}:f> (<t:${roundedUnix}:R>)\n-# Computed as ${r} restock(s) ahead.`
             });
 
@@ -103,7 +107,7 @@ export default {
             msgs.push({ components: [header], flags: MessageFlags.IsComponentsV2 });
 
             if (list.length > 0) {
-                const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ")
+                const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true)
                 embed.addTextDisplayComponents(
                     CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
                 )
