@@ -148,7 +148,7 @@ const RNGInfo = {
     Egg: {
         refSeedStr: 974876,
         refUnixStr: 1754777400,
-        restock_cycle_duration: 60 * 60
+        restock_cycle_duration: 30 * 60
     }
 }
 
