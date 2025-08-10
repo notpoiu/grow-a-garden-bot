@@ -227,6 +227,8 @@ export const PredictStock = (type, restocks = 0) => {
 
     if (type == "Egg") {
         const resultsMapping = {}
+        let totalNonCommonEggs = 0
+        
         for (let i = 0; i < 3; i++) {
             for (const item of data) {
                 const roll = rng.NextInteger(1, item.StockChance);
@@ -236,14 +238,19 @@ export const PredictStock = (type, restocks = 0) => {
                         resultsMapping[item.EggName] = 0
                     
                     resultsMapping[item.EggName] += 1
+
+                    if (item.EggName !== "Common Egg") {
+                        totalNonCommonEggs += 1
+                    }
                 }
             }
         }
 
         results = Object.entries(resultsMapping).map(([name, count]) => {
+            const isCommon = name === "Common Egg"
             return {
                 item: name,
-                stock: count,
+                stock: isCommon ? 3 - totalNonCommonEggs : count,
                 restocks: Math.max(0, Math.floor(restocks))
             };
         });
