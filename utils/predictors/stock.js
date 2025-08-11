@@ -139,13 +139,13 @@ const normalizeSeedTo32Bit = (seed) => {
 
 const RNGInfo = {
     Seed: {
-        refSeedStr: 5848996,
-        refUnixStr: 1754698800,
+        refSeedStr: 479300984,
+        refUnixStr: 1754925000,
         restock_cycle_duration: 5 * 60
     },
 
     Gear: {
-        refSeedStr: 5848996,
+        refSeedStr: 479300984,
         refUnixStr: 1754698800,
         restock_cycle_duration: 5 * 60
     },
@@ -225,7 +225,7 @@ export const PredictStock = (type, restocks = 0) => {
     const raw = GetStockDataDump(type);
     const data = SortDataToGameOrder(type, raw);
     if (!data || !Array.isArray(data)) return null;
-
+    console.log(baseSeed);
     const rng = new Random(baseSeed + restocks);
     let results = [];
 
@@ -308,6 +308,8 @@ export const PredictStockOccurences = (...args) => {
     }
 
     const baseSeed = GetBaseSeed(type);
+
+    console.log(baseSeed)
 
     const raw = GetStockDataDump(type);
     const data = SortDataToGameOrder(type, raw);
