@@ -19,12 +19,12 @@ export default {
                 .setAutocomplete(true)
                 .setRequired(false)
         )
-        .addStringOption(option =>
+        /*.addStringOption(option =>
             option.setName("egg")
                 .setDescription("Egg name")
                 .setAutocomplete(true)
                 .setRequired(false)
-        )
+        )*/
         .addIntegerOption(option =>
             option.setName("max")
                 .setDescription("Max occurrences to search (1-15)")
@@ -38,13 +38,13 @@ export default {
     async execute(interaction) {
         const seedName = interaction.options.getString("seed");
         const gearName = interaction.options.getString("gear");
-        const eggName = interaction.options.getString("egg");
+        const eggName = null; // interaction.options.getString("egg")
         const max = interaction.options.getInteger("max") || 5;
 
         const provided = [!!seedName, !!gearName, !!eggName].filter(Boolean).length;
         if (provided !== 1) {
             return await interaction.reply({
-                content: "Please provide exactly one of: seed, gear or egg.",
+                content: "Please provide exactly one of: seed, gear.",
                 flags: MessageFlags.Ephemeral
             });
         }

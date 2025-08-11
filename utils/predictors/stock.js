@@ -103,16 +103,21 @@ const PredictQuantity = (seed, name, data) => {
 const PredictEggQuantity = (seed, name, data) => {
     const rng = new Random(seed);
     let Quantity = 0;
-
-    for (let i = 0; i < 3; i++) {
-        for (const item of data) {
+    let AddedEggs = 0;
+    for (const item of data) {
+        for (let i = 0; i < 3; i++) {
+            if (item.EggName === "Common Egg") continue;
+            
             const roll = rng.NextInteger(1, item.StockChance);
-    
-            if (item.EggName == name && roll == 1) {
+            const index = data.findIndex(itemChecking => itemChecking.EggName === item.EggName);
+            
+            if (roll === index) {
                 Quantity += 1;
             }
         }
     }
+
+    if (name == "Common Egg") return 3 - AddedEggs;
 
     return Quantity == 0 ? null : Quantity
 }
@@ -221,37 +226,38 @@ export const PredictStock = (type, restocks = 0) => {
     const data = SortDataToGameOrder(type, raw);
     if (!data || !Array.isArray(data)) return null;
 
-    const offset = Math.max(0, Math.floor(restocks));
-    const rng = new Random(baseSeed + offset);
+    const rng = new Random(baseSeed + restocks);
     let results = [];
 
     if (type == "Egg") {
         const resultsMapping = {}
-        let totalNonCommonEggs = 0
-        
-        for (let i = 0; i < 3; i++) {
-            for (const item of data) {
-                const roll = rng.NextInteger(1, item.StockChance);
+        let AddedEggs = 0
+        for (const item of data) {
+            for (let i = 0; i < 3; i++) {
+            
+                if (item.EggName === "Common Egg") continue;
                 
-                if (roll === 1) {
+                const roll = rng.NextInteger(1, item.StockChance);
+                const index = data.findIndex(itemChecking => itemChecking.EggName === item.EggName);
+                
+                if (roll === index) {
                     if (!resultsMapping[item.EggName])
                         resultsMapping[item.EggName] = 0
                     
                     resultsMapping[item.EggName] += 1
-
-                    if (item.EggName !== "Common Egg") {
-                        totalNonCommonEggs += 1
-                    }
+                    AddedEggs += 1
                 }
             }
         }
+        
+        
+        resultsMapping["Common Egg"] = 3 - AddedEggs
 
         results = Object.entries(resultsMapping).map(([name, count]) => {
-            const isCommon = name === "Common Egg"
             return {
                 item: name,
-                stock: isCommon ? 3 - totalNonCommonEggs : count,
-                restocks: Math.max(0, Math.floor(restocks))
+                stock: count,
+                restocks: restocks
             };
         });
     } else {
@@ -260,7 +266,7 @@ export const PredictStock = (type, restocks = 0) => {
             const [minAmt, maxAmt] = GetMinMaxFromStockAmount(item.StockAmount);
             const stock = rng.NextInteger(minAmt, maxAmt);
             if (roll === 1) {
-                results.push({ item: item.name, stock, restocks: Math.max(0, Math.floor(restocks)) });
+                results.push({ item: item.name, stock, restocks: restocks });
             }
         }
     }

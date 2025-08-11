@@ -1,3 +1,3 @@
-import { PredictStock } from "./utils/predictors/stock.js";
+import { PredictStock, PredictStockOccurences } from "./utils/predictors/stock.js";
 
-console.log(PredictStock("Egg", -1))
+console.log(PredictStockOccurences("Seed", "Beanstalk", 5))
