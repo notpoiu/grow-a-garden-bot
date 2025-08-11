@@ -8,6 +8,9 @@ console.log(`    GAG Stock Bot - by upio
     └ ○ Node.js Version: ${process.version}
 `)
 
+if (process.platform === 'darwin') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 // imports
 import { InitServer } from "./data/communication/server/server.js";

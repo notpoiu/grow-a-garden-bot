@@ -1,7 +1,6 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateEmbed, ConnectorEmojis, EmojiMappings, CreateText } from "../../utils/message.js";
-import { PredictStockOccurences } from "../../utils/predictors/stock.js";
-import { GetEmojiForStock, GetShopVisibilityData, GetStockData } from "../../utils/db.js";
+import { CreateEmbed, EmojiMappings, CreateText } from "../../utils/message.js";
+import { GetEmojiForStock, GetShopVisibilityData } from "../../utils/db.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -19,12 +18,12 @@ export default {
                 .setAutocomplete(true)
                 .setRequired(false)
         )
-        /*.addStringOption(option =>
+        .addStringOption(option =>
             option.setName("egg")
                 .setDescription("Egg name")
                 .setAutocomplete(true)
                 .setRequired(false)
-        )*/
+        )
         .addIntegerOption(option =>
             option.setName("max")
                 .setDescription("Max occurrences to search (1-15)")
@@ -38,7 +37,7 @@ export default {
     async execute(interaction) {
         const seedName = interaction.options.getString("seed");
         const gearName = interaction.options.getString("gear");
-        const eggName = null; // interaction.options.getString("egg")
+        const eggName = interaction.options.getString("egg")
         const max = interaction.options.getInteger("max") || 5;
 
         const provided = [!!seedName, !!gearName, !!eggName].filter(Boolean).length;
@@ -48,7 +47,7 @@ export default {
                 flags: MessageFlags.Ephemeral
             });
         }
-
+        
         let type = null;
         if (seedName)
             type = "Seed"
@@ -58,18 +57,39 @@ export default {
             type = "Egg"
 
         const itemName = seedName || gearName || eggName;
-        const occ = PredictStockOccurences(type, itemName, max);
+        //const occ = PredictStockOccurences(type, itemName, max);
 
-        if (!occ || occ.length === 0) {
+        const prediction = await fetch(`${process.env.EXTERNAL_API_BASEURL}/api/v1/predict?name=${encodeURIComponent(itemName)}&amount=${max}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": process.env.EXTERNAL_API_KEY
+            },
+        })
+
+        if (!prediction.ok) {
+            return await interaction.reply({
+                content: `Error fetching data for "${itemName}".`,
+                flags: MessageFlags.Ephemeral
+            });
+        }
+
+        const data = await prediction.json();
+        if (!data || !data.length) {
             return await interaction.reply({
                 content: `No future occurrences found for "${itemName}" within search limits.`,
                 flags: MessageFlags.Ephemeral
             });
         }
 
+        const occ = data.map(d => ({
+            stock: d.Stock,
+            unix: d.Unix
+        }));
+
         const emoji = GetEmojiForStock(itemName) || EmojiMappings[itemName] || "";
         const lines = occ.map((o, idx) => {
-            const when = o.unix ? `<t:${o.unix}:f> (<t:${o.unix}:R>)` : `${o.restocks} restock(s) away`;
+            const when = `<t:${o.unix}:f> (<t:${o.unix}:R>)`;
             return `- **${emoji ? emoji + " " : ""}${itemName}** (x${o.stock})\n   - ${when}`;
         }).join("\n");
 
