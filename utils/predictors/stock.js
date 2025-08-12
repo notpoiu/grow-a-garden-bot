@@ -10,19 +10,32 @@ const RestockCycleDurations = {
 const SortDataToGameOrder = (type, data) => {
     if (!Array.isArray(data)) return [];
 
-    // Clone to avoid mutating external state
     let arr = data.slice();
+    if (type === "Gear") {
+        arr.sort((a, b) => {
+            const an = String(a.name || "");
+            const bn = String(b.name || "");
+            if (an === "Medium Toy" && bn === "Medium Treat") return 1;
+            if (an === "Medium Treat" && bn === "Medium Toy") return -1;
 
-    arr.sort((a, b) => {
-        const pa = Number(a.Price ?? 0);
-        const pb = Number(b.Price ?? 0);
-        if (pa === pb) {
-            const la = Number(a.LayoutOrder ?? 0);
-            const lb = Number(b.LayoutOrder ?? 0);
-            return la - lb;
-        }
-        return pa - pb;
-    });
+            const pa = Number(a.Price ?? 0);
+            const pb = Number(b.Price ?? 0);
+            return pa - pb;
+        });
+    } else {
+        arr.sort((a, b) => {
+            const pa = Number(a.Price ?? 0);
+            const pb = Number(b.Price ?? 0);
+    
+            if (pa === pb) {
+                const la = Number(a.LayoutOrder ?? 0);
+                const lb = Number(b.LayoutOrder ?? 0);
+                return la - lb;
+            }
+    
+            return pa - pb;
+        });
+    }
 
     return arr;
 }
@@ -86,8 +99,9 @@ const GetBaseSeed = (type) => {
 }
 
 const GetRestockUnix = (restock_amount, restock_cycle_duration = 300) => {
-    const base = Math.floor(Date.now() / 1000);
-    return base + (restock_amount * restock_cycle_duration);
+    const nowSec = Math.floor(Date.now() / 1000);
+    const currentCycleStart = nowSec - (nowSec % restock_cycle_duration);
+    return currentCycleStart + (restock_amount * restock_cycle_duration);
 }
 
 // Returns all items predicted to be in stock after `restocks` future restocks for the given `type`.
@@ -118,7 +132,7 @@ export const PredictStock = (type, restocks = 0) => {
 }
 
 // Helper to find which stock `type` contains an item by name, by scanning known types' data dumps
-const FindTypeForItem = (itemName) => {
+export const FindTypeForItem = (itemName) => {
     try {
         const types = GetStockTypes ? GetStockTypes() : [];
         for (const type of types) {

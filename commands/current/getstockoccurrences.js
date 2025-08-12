@@ -1,28 +1,17 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { CreateEmbed, EmojiMappings, CreateText } from "../../utils/message.js";
-import { GetEmojiForStock, GetShopVisibilityData } from "../../utils/db.js";
+import { GetEmojiForStock, GetShopVisibilityDataMultiple } from "../../utils/db.js";
+import { PredictStockOccurences, FindTypeForItem } from "../../utils/predictors/stock.js";
 
 export default {
     data: new SlashCommandBuilder()
         .setName("getstockoccurrences")
         .setDescription("Finds next occurrences for a seed or gear")
         .addStringOption(option =>
-            option.setName("seed")
-                .setDescription("Seed name")
+            option.setName("item")
+                .setDescription("item name")
                 .setAutocomplete(true)
-                .setRequired(false)
-        )
-        .addStringOption(option =>
-            option.setName("gear")
-                .setDescription("Gear name")
-                .setAutocomplete(true)
-                .setRequired(false)
-        )
-        .addStringOption(option =>
-            option.setName("egg")
-                .setDescription("Egg name")
-                .setAutocomplete(true)
-                .setRequired(false)
+                .setRequired(true)
         )
         .addIntegerOption(option =>
             option.setName("max")
@@ -35,57 +24,11 @@ export default {
         .setContexts(InteractionContextType.BotDM, InteractionContextType.PrivateChannel, InteractionContextType.Guild),
 
     async execute(interaction) {
-        const seedName = interaction.options.getString("seed");
-        const gearName = interaction.options.getString("gear");
-        const eggName = interaction.options.getString("egg")
+        const itemName = interaction.options.getString("item");
         const max = interaction.options.getInteger("max") || 5;
 
-        const provided = [!!seedName, !!gearName, !!eggName].filter(Boolean).length;
-        if (provided !== 1) {
-            return await interaction.reply({
-                content: "Please provide exactly one of: seed, gear.",
-                flags: MessageFlags.Ephemeral
-            });
-        }
-        
-        let type = null;
-        if (seedName)
-            type = "Seed"
-        else if (gearName)
-            type = "Gear"
-        else
-            type = "Egg"
-
-        const itemName = seedName || gearName || eggName;
-        //const occ = PredictStockOccurences(type, itemName, max);
-
-        const prediction = await fetch(`${process.env.EXTERNAL_API_BASEURL}/api/v1/predict?name=${encodeURIComponent(itemName)}&amount=${max}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": process.env.EXTERNAL_API_KEY
-            },
-        })
-
-        if (!prediction.ok) {
-            return await interaction.reply({
-                content: `Error fetching data for "${itemName}".`,
-                flags: MessageFlags.Ephemeral
-            });
-        }
-
-        const data = await prediction.json();
-        if (!data || !data.length) {
-            return await interaction.reply({
-                content: `No future occurrences found for "${itemName}" within search limits.`,
-                flags: MessageFlags.Ephemeral
-            });
-        }
-
-        const occ = data.map(d => ({
-            stock: d.Stock,
-            unix: d.Unix
-        }));
+        const occ = PredictStockOccurences(itemName, max);
+        const type = FindTypeForItem(itemName);
 
         const emoji = GetEmojiForStock(itemName) || EmojiMappings[itemName] || "";
         const lines = occ.map((o, idx) => {
@@ -112,23 +55,9 @@ export default {
         const focused = interaction.options.getFocused(true);
         const query = (focused.value || "").toString().toLowerCase();
 
-        let type = null;
-        switch (focused.name) {
-            case "seed":
-                type = "Seed"
-                break;
-            case "gear":
-                type = "Gear"
-                break;
-            case "egg":
-                type = "Egg"
-                break;
-        }
-
-
         let rows = [];
         try {
-            rows = GetShopVisibilityData(type) || [];
+            rows = GetShopVisibilityDataMultiple(["Seed", "Gear"]).flat() || [];
         } catch (_) {}
 
         const suggestions = rows

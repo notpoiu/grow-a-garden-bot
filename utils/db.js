@@ -165,6 +165,18 @@ export const GetShopVisibilityData = (type) => {
     return JSON.parse(data.visible_items);
 }
 
+export const GetShopVisibilityDataMultiple = (types) => {
+    InternalEnsureTables();
+
+    const placeholders = types.map(() => '?').join(',');
+
+    const stmt = db.prepare(`SELECT visible_items FROM shop_data WHERE type IN (${placeholders})`);
+    const data = stmt.all(...types);
+
+    return data.map(d => JSON.parse(d.visible_items));
+}
+
+
 export const GetCurrentStockData = (type) => {
     InternalEnsureTables();
 

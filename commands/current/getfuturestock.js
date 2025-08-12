@@ -1,5 +1,20 @@
 import { ApplicationIntegrationType, InteractionContextType, SlashCommandBuilder, MessageFlags } from "discord.js";
-import { CreateStockEmbed, CreateText } from "../../utils/message.js";
+import { CreateStockEmbed, CreateEmbed, EmojiMappings, CreateText } from "../../utils/message.js";
+import { PredictStock } from "../../utils/predictors/stock.js";
+
+const toUnix = (date) => Math.floor(date.getTime() / 1000);
+const nextRestockUnix = (nowSec = Math.floor(Date.now() / 1000)) => {
+    const base = Math.floor(nowSec / 300) * 300;
+    return base + 300;
+}
+
+const restocksUntil = (targetDate) => {
+    const targetUnix = toUnix(targetDate);
+    const roundedTarget = Math.ceil(targetUnix / 300) * 300;
+    const start = nextRestockUnix();
+    if (roundedTarget <= start) return 0;
+    return Math.floor((roundedTarget - start) / 300);
+}
 
 const listToMap = (arr) => {
     const map = {};
@@ -19,9 +34,19 @@ export default {
                 .addChoices(
                     { name: "Seed", value: "Seed" },
                     { name: "Gear", value: "Gear" },
-                    { name: "Egg", value: "Egg"}
                 )
                 .setRequired(true)
+        )
+        .addIntegerOption(option =>
+            option.setName("restocks")
+                .setDescription("How many restocks ahead to predict")
+                .setRequired(false)
+                .setMinValue(0)
+        )
+        .addStringOption(option =>
+            option.setName("date")
+                .setDescription("Target date/time (YYYY-MM-DD or ISO). Uses 5-minute restock intervals.")
+                .setRequired(false)
         )
         .setIntegrationTypes(ApplicationIntegrationType.UserInstall, ApplicationIntegrationType.GuildInstall)
         .setContexts(InteractionContextType.BotDM, InteractionContextType.PrivateChannel, InteractionContextType.Guild),
@@ -29,34 +54,82 @@ export default {
     async execute(interaction) {
         const type = interaction.options.getString("type");
 
-        const prediction = await fetch(`${process.env.EXTERNAL_API_BASEURL}/api/v1/predict/NextRestock?type=${encodeURIComponent(type)}`, {
-            method: "GET",
-            headers: {
-                "x-api-key": process.env.EXTERNAL_API_KEY
-            },
-        })
+        const restocks = interaction.options.getInteger("restocks") || 1;
+        const dateString = interaction.options.getString("date");
 
-        if (!prediction.ok) {
+        const provided = [restocks !== null && restocks !== undefined, !!dateString].filter(Boolean).length;
+        if (provided !== 1) {
             return await interaction.reply({
-                content: `Error fetching data for "${type}".`,
+                content: "Please provide exactly one of: restocks or date.",
                 flags: MessageFlags.Ephemeral
             });
         }
+        
+        // Predict for a number of restocks ahead
+        if (restocks !== null && restocks !== undefined) {
+            const list = PredictStock(type, restocks) || [];
+            if (list.length === 0) {
+                return await interaction.reply({
+                    content: `No ${type.toLowerCase()} items predicted to stock in ${restocks} restock(s).`,
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
-        const Data = await prediction.json();
-        const list = listToMap(Data.map(d => ({
-            item: d.Name,
-            stock: d.Stock
-        })));
+            const msg = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true);
+            if (msg.components && msg.components[0])
+                msg.components[0].addTextDisplayComponents(
+                    CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+                )
 
-        const msg = CreateStockEmbed(type, list, interaction.channelId, "Future ", true);
-        if (msg.components && msg.components[0])
-            msg.components[0].addTextDisplayComponents(
-                CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
-            )
+            await interaction.reply(msg);
+            return;
+        }
 
-        await interaction.reply(msg);
-        return;
+        // Predict for a target date
+        if (dateString) {
+            const target = new Date(dateString);
+            if (isNaN(target.getTime())) {
+                return await interaction.reply({
+                    content: "Invalid date format. Please use YYYY-MM-DD or an ISO date.",
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
+            const r = restocksUntil(target);
+            const roundedUnix = Math.ceil(toUnix(target) / 300) * 300;
+
+            const header = CreateEmbed({
+                title: `${EmojiMappings[type] || ""} Future ${type} Stock"`,
+                description: `Predictions for <t:${roundedUnix}:f> (<t:${roundedUnix}:R>)\n-# Computed as ${r} restock(s) ahead.`
+            });
+
+            const list = PredictStock(type, r) || [];
+
+            const msgs = [];
+            msgs.push({ components: [header], flags: MessageFlags.IsComponentsV2 });
+
+            if (list.length > 0) {
+                const embed = CreateStockEmbed(type, listToMap(list), interaction.channelId, "Future ", true)
+                if (embed.components && embed.components[0])
+                    embed.components[0].addTextDisplayComponents(
+                        CreateText("-# This using a prediction algorithm and may not be 100% accurate!")
+                    )
+
+                msgs.push(embed);
+            }
+
+            if (msgs.length === 1) {
+                return await interaction.reply({
+                    content: `No ${type.toLowerCase()} items predicted to stock by that time.`,
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
+            await interaction.reply(msgs[0]);
+            for (let i = 1; i < msgs.length; i++) {
+                await interaction.followUp(msgs[i]);
+            }
+        }
     },
 }
 
