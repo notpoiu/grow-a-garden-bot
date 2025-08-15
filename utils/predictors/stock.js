@@ -7,6 +7,8 @@ const RestockCycleDurations = {
     Egg: 30 * 60
 }
 
+const SeedOffset = 473451234;
+
 const SortDataToGameOrder = (type, data) => {
     if (!Array.isArray(data)) return [];
 
@@ -95,7 +97,7 @@ const GetBaseSeed = (type) => {
     const period = GetRestockCycleSeconds(type);
     const nowSec = Math.floor(Date.now() / 1000);
 
-    return Math.floor(nowSec / period);
+    return Math.floor(nowSec / period) + SeedOffset;
 }
 
 const GetRestockUnix = (restock_amount, restock_cycle_duration = 300) => {
