@@ -8,6 +8,7 @@ const RestockCycleDurations = {
 }
 
 const SeedOffset = 473451234;
+const MaxSearchOccurences = 2_000_000;
 
 const SortDataToGameOrder = (type, data) => {
     if (!Array.isArray(data)) return [];
@@ -147,7 +148,6 @@ export const FindTypeForItem = (itemName) => {
     return null;
 }
 
-const MaxSearch = 2_000_000;
 export const PredictStockOccurences = (itemName, occurrences) => {
     const type = FindTypeForItem(itemName);
     if (!type) return [];
@@ -157,7 +157,7 @@ export const PredictStockOccurences = (itemName, occurrences) => {
     const restockCycleDuration = GetRestockCycleSeconds(type);
 
     const results = [];
-    for (let offset = 0; offset <= MaxSearch; offset++) {
+    for (let offset = 0; offset <= MaxSearchOccurences; offset++) {
         if (totalOccurences >= occurrences) break;
 
         const stock = PredictStock(type, offset);
