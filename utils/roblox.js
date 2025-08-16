@@ -88,4 +88,8 @@ export class Random {
       return Number((x >> 32n) + BigInt(lo));
     }
   }
+
+  AdvanceState() {
+    this._nextInternal();
+  }
 }

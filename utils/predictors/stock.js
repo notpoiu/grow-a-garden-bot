@@ -111,18 +111,18 @@ const GetRestockUnix = (restock_amount, restock_cycle_duration = 300) => {
 // Each entry: { item, stock, restocks }
 export const PredictStock = (type, restocks = 0) => {
     const baseSeed = GetBaseSeed(type);
-    
+
     const raw = GetStockDataDump(type);
     
     const data = SortDataToGameOrder(type, raw);
     if (!data || !Array.isArray(data)) return null;
-    
+
     const rng = new Random(baseSeed + restocks);
     let results = [];
 
     for (const item of data) {
         const roll = rng.NextInteger(1, item.StockChance);
-
+        
         const [minAmt, maxAmt] = GetMinMaxFromStockAmount(item.StockAmount);
         const amount = rng.NextInteger(minAmt, maxAmt);
 

@@ -1,3 +1,3 @@
 import { PredictStock, PredictStockOccurences } from "./utils/predictors/stock.js";
 
-console.log(PredictStockOccurences("Grandmaster Sprinkler", 5))
+console.log(PredictStock("Seed", 0))

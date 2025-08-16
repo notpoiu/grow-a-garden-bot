@@ -67,6 +67,13 @@ app.get("/script.luau", (req, res) => {
     res.sendFile("datahandler.luau", { root: "data/communication/scripts" });
 });
 
+// API Endpoints
+app.get("/api/v1/current/:type", async (req, res) => {
+    const { type } = req.params;
+    const data = GetCurrentStockData(type);
+    res.status(200).send({ data });
+});
+
 // SQL Query Endpoint
 app.post("/sql/query", async (req, res) => {
     const { query } = req.body;
