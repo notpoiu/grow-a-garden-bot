@@ -298,6 +298,13 @@ export const IsChannelSubscribed = (channel_id, type) => {
     return !!result;
 }
 
+export const ClearPreviousPingRoles = (channel_id, name, stock_type) => {
+    InternalEnsureTables();
+
+    const stmt = db.prepare("DELETE FROM roles WHERE channel_id = ? AND name = ? AND stock_type = ?");
+    stmt.run(channel_id, name, stock_type);
+}
+
 export const AddPingRole = (channel_id, role_id, name, stock_type) => {
     InternalEnsureTables();
     

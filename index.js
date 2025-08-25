@@ -15,7 +15,7 @@ if (process.platform === 'darwin') {
 // imports
 import { InitServer } from "./data/communication/server/server.js";
 import { SynchronizeSlashCommands, GetSlashCommands } from "./utils/rest.js";
-import { GetReactionRoleMessage, GetPingRolesForChannel } from "./utils/db.js";
+import { GetReactionRoleMessage, GetPingRolesForChannel, ClearPreviousPingRoles } from "./utils/db.js";
 import { CreateEmbed } from "./utils/message.js";
 import Logger from './logger.js';
 
@@ -149,6 +149,8 @@ client.on(Events.InteractionCreate, async interaction => {
                         
                         // If role doesn't exist in guild anymore, create new one and update database
                         if (!stockRole) {
+                            ClearPreviousPingRoles(tracking_channel_id, StockName, stock);
+                            
                             stockRole = await interaction.guild.roles.create({
                                 name: RoleName,
                                 permissions: [],
