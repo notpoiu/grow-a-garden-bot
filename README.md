@@ -1,4 +1,7 @@
-# setup
+# Stock Watcher Source Code
+Source released cuz i didnt feel like keeping the bot up
+
+## Setting up
 
 env variables:
 ```
